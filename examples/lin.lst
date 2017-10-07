@@ -1,9 +1,0 @@
-BACI System: Pascal to PCODE Compiler in C, 14:33   7 Oct 2017
-Source file: /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/lin.pm  Sun Jul 18 11:36:10 2004
- line  pc
-   1    0  program LindaTest;
-   2    0  
-   3    0  process p1;
-Error near 'process', line 3 of file /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/lin.pm:
-**   syntax error 
-Because of 1 error the PCODE file will not execute

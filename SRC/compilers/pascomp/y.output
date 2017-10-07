@@ -1,0 +1,5063 @@
+Terminals unused in grammar
+
+   CASE
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: init_outerscope outer_decls
+    2        | init_outerscope outer_decls pgm_decl
+    3        | init_outerscope pgm_decl
+
+    4 init_outerscope: %empty
+
+    5 outer_decls: outer_decl
+    6            | outer_decls outer_decl
+
+    7 outer_decl: include_dcl_part
+    8           | proc_dcl_part
+    9           | mon_dcl_part
+   10           | type_dcl_part
+   11           | const_dcl_part
+   12           | var_dcl_part
+   13           | extern_decl
+
+   14 extern_decl: extern_var_decl
+   15            | extern_proc_decl
+   16            | extern_mon_decl
+
+   17 extern_var_decl: the_external VAR variable_dcls ';'
+
+   18 extern_proc_decl: the_external proc_or_func_proto
+
+   19 the_external: EXTERNAL
+
+   20 proc_or_func_proto: proc_proto
+   21                   | func_proto
+
+   22 extern_mon_decl: the_external mon_heading proto_list END ';'
+
+   23 proto_list: proc_or_func_proto
+   24           | proto_list proc_or_func_proto
+
+   25 pgm_decl: pgm_hdg_decls statement_part '.'
+
+   26 pgm_hdg_decls: pgm_heading ';' opt_declarations
+
+   27 pgm_heading: PROGRAM newident
+
+   28 opt_declarations: %empty
+   29                 | declarations
+
+   30 declarations: declarations declaration
+   31             | declaration
+
+   32 declaration: include_dcl_part
+   33            | const_dcl_part
+   34            | type_dcl_part
+   35            | var_dcl_part
+   36            | proc_dcl_part
+   37            | mon_dcl_part
+
+   38 include_dcl_part: start_include RAWSTRING
+
+   39 start_include: '#' INCLUDE
+
+   40 include_dcl_part: start_include FNSTRING
+
+   41 const_dcl_part: CONST const_defs ';'
+
+   42 const_defs: const_defs ';' const_def
+   43           | const_def
+
+   44 const_def: newident '=' constant
+
+   45 constant: unsigned_num
+   46         | '+' unsigned_num
+   47         | '-' unsigned_num
+   48         | ident
+   49         | '+' ident
+   50         | '-' ident
+   51         | CHAR
+
+   52 unsigned_num: UNSIGNED_INT
+
+   53 type_dcl_part: TYPE type_defs ';'
+
+   54 type_defs: type_defs ';' type_def
+   55          | type_def
+
+   56 type_def: newident '=' type
+
+   57 type: simple_type
+   58     | struct_type
+   59     | string_type
+
+   60 simple_type: ident
+
+   61 struct_type: ARRAY '[' index_type ']' last_atab OF type
+
+   62 index_type: index_type ',' dimension
+   63           | dimension
+
+   64 dimension: low constant
+
+   65 low: constant DOTDOT
+
+   66 last_atab: %empty
+
+   67 string_type: STRING '[' constant ']'
+
+   68 var_dcl_part: VAR variable_dcls ';'
+
+   69 variable_dcls: variable_dcls ';' variable_dcl
+   70              | variable_dcl
+
+   71 variable_dcl: newident_list ':' type opt_initializer
+
+   72 newident_list: new_id_list
+
+   73 new_id_list: new_id_list ',' newident
+   74            | newident
+
+   75 opt_initializer: %empty
+   76                | BECOMES constant
+
+   77 proc_dcl_part: proc_or_func
+
+   78 proc_or_func: proc_hdg_decl statement_part ';'
+   79             | func_hdg_decl statement_part ';'
+
+   80 proc_hdg_decl: proc_proto opt_declarations
+
+   81 proc_proto: opt_atomic proc_heading ';'
+
+   82 opt_atomic: %empty
+   83           | ATOMIC
+
+   84 proc_heading: proc_id formal_params
+
+   85 proc_id: PROCEDURE IDENTIFIER
+
+   86 func_hdg_decl: func_proto opt_declarations
+
+   87 func_proto: opt_atomic func_heading ';'
+
+   88 func_heading: func_id formal_params ':' ident
+
+   89 func_id: FUNCTION IDENTIFIER
+
+   90 formal_params: %empty
+   91              | '(' formal_p_sects ')'
+
+   92 formal_p_sects: formal_p_sects ';' formal_p_sect
+   93               | formal_p_sect
+
+   94 formal_p_sect: param_group
+   95              | var_param_group
+   96              | string_param_group
+
+   97 param_group: newident_list ':' ident
+
+   98 var_param_group: VAR newident_list ':' ident
+
+   99 string_param_group: newident_list ':' STRING
+
+  100 mon_dcl_part: mon_heading mon_decl opt_stmt_part ';'
+
+  101 mon_heading: MONITOR newident ';'
+
+  102 mon_decl: opt_declarations
+
+  103 opt_stmt_part: END
+  104              | compound_stmt
+
+  105 compound_stmt: the_begin statements END
+
+  106 the_begin: SBEGIN
+
+  107 statement_part: compound_stmt
+
+  108 statements: statements ';' statement
+  109           | statement
+  110           | error ';'
+  111           | error END
+
+  112 statement: %empty
+  113          | compound_stmt
+  114          | assignment
+  115          | procedure_call
+  116          | special_proc_call
+  117          | if_expr then_stmt
+  118          | if_expr then_stmt the_else statement
+  119          | the_while while_expr DO statement
+  120          | the_repeat statements UNTIL expr
+  121          | for_header statement
+  122          | cbegin statements CEND
+
+  123 if_expr: IF expr
+
+  124 then_stmt: THEN statement
+
+  125 the_else: ELSE
+
+  126 the_while: WHILE
+
+  127 while_expr: expr
+
+  128 the_repeat: REPEAT
+
+  129 for_id: FOR ident
+
+  130 for_header: for_id_becomes_expr TO expr DO
+
+  131 for_id_becomes_expr: for_id BECOMES expr
+
+  132 cbegin: CBEGIN
+
+  133 assignment: id_becomes expr
+  134           | array_var BECOMES expr
+
+  135 id_becomes: ident BECOMES
+
+  136 procedure_call: pfv_id check_proc actual_params
+
+  137 actual_params: %empty
+  138              | '(' actuals_list ')'
+
+  139 actuals_list: actuals_list ',' actual_param
+  140             | actual_param
+
+  141 actual_param: expr
+  142             | RAWSTRING
+
+  143 pfv_id: ident
+
+  144 check_proc: %empty
+
+  145 special_proc_call: send_call
+  146                  | broadcast_call
+  147                  | stringconcat_call
+  148                  | stringcopy_call
+  149                  | sprintf_call
+
+  150 send_call: SEND left_exprparm ',' expr ')'
+
+  151 left_exprparm: '(' rawstring_parm
+  152              | '(' expr
+
+  153 broadcast_call: BROADCAST single_exprparm
+
+  154 stringconcat_call: STRINGCONCAT left_exprparm right_stringparm
+
+  155 right_stringparm: ',' expr ')'
+  156                 | ',' rawstring_parm ')'
+
+  157 rawstring_parm: RAWSTRING
+
+  158 stringcopy_call: STRINGCOPY left_exprparm right_stringparm
+
+  159 sprintf_call: sprintf_buf_fmt ',' sprintf_parmlist ')'
+
+  160 sprintf_buf_fmt: SPRINTF '(' expr ',' rawstring_parm
+
+  161 sprintf_parmlist: expr
+  162                 | sprintf_parmlist ',' expr
+
+  163 expr: simple_expr
+  164     | left_simp_expr relational_op simple_expr
+
+  165 relational_op: '='
+  166              | '<'
+  167              | '>'
+  168              | LE
+  169              | GE
+  170              | NE
+
+  171 simple_expr: term
+  172            | '+' term
+  173            | '-' term
+  174            | left_simp_expr add_op term
+
+  175 left_simp_expr: simple_expr
+
+  176 add_op: '+'
+  177       | '-'
+  178       | OR
+
+  179 term: factor
+  180     | left_term mult_op factor
+
+  181 left_term: term
+
+  182 mult_op: '*'
+  183        | DIV
+  184        | MOD
+  185        | AND
+
+  186 factor: variable
+  187       | unsigned_num
+  188       | CHAR
+  189       | '(' expr ')'
+  190       | NOT factor
+
+  191 variable: pfv_id check_func actual_params
+  192         | special_func_call
+  193         | array_var
+  194         | typecast
+
+  195 check_func: %empty
+
+  196 special_func_call: stringcompare_call
+  197                  | stringlength_call
+  198                  | receive_call
+  199                  | sscanf_call
+
+  200 stringcompare_call: STRINGCOMPARE left_exprparm right_stringparm
+
+  201 stringlength_call: STRINGLENGTH single_exprparm
+
+  202 single_exprparm: '(' expr ')'
+  203                | '(' RAWSTRING ')'
+
+  204 receive_call: RECEIVE left_exprparm ')'
+  205             | RECEIVE left_exprparm ',' expr ')'
+
+  206 sscanf_call: sscanf_buf_fmt ',' sscanf_parmlist ')'
+
+  207 sscanf_buf_fmt: SSCANF '(' expr ',' rawstring_parm
+
+  208 sscanf_parmlist: expr
+  209                | sscanf_parmlist ',' expr
+
+  210 array_var: array_id '[' index_expr ']'
+
+  211 array_id: ident
+
+  212 index_expr: index_expr ',' expr
+  213           | expr
+
+  214 typecast: INT '(' expr ')'
+
+  215 ident: IDENTIFIER
+
+  216 newident: IDENTIFIER
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'#' (35) 39
+'(' (40) 91 138 151 152 160 189 202 203 207 214
+')' (41) 91 138 150 155 156 159 189 202 203 204 205 206 214
+'*' (42) 182
+'+' (43) 46 49 172 176
+',' (44) 62 73 139 150 155 156 159 160 162 205 206 207 209 212
+'-' (45) 47 50 173 177
+'.' (46) 25
+':' (58) 71 88 97 98 99
+';' (59) 17 22 26 41 42 53 54 68 69 78 79 81 87 92 100 101 108 110
+'<' (60) 166
+'=' (61) 44 56 165
+'>' (62) 167
+'[' (91) 61 67 210
+']' (93) 61 67 210
+error (256) 110 111
+UNSIGNED_INT (258) 52
+STRING (259) 67 99
+RAWSTRING (260) 38 142 157 203
+STRINGCONCAT (261) 154
+STRINGCOMPARE (262) 200
+STRINGCOPY (263) 158
+STRINGLENGTH (264) 201
+SSCANF (265) 207
+SPRINTF (266) 160
+IDENTIFIER (267) 85 89 215 216
+CHAR (268) 51 188
+INT (269) 214
+NE (270) 170
+LE (271) 168
+GE (272) 169
+BECOMES (273) 76 131 134 135
+DIV (274) 183
+MOD (275) 184
+OR (276) 178
+AND (277) 185
+NOT (278) 190
+DOTDOT (279) 65
+IF (280) 123
+THEN (281) 124
+ELSE (282) 125
+CASE (283)
+OF (284) 61
+REPEAT (285) 128
+UNTIL (286) 120
+WHILE (287) 126
+DO (288) 119 130
+FOR (289) 129
+TO (290) 130
+CBEGIN (291) 132
+SBEGIN (292) 106
+END (293) 22 103 105 111
+CEND (294) 122
+CONST (295) 41
+VAR (296) 17 68 98
+TYPE (297) 53
+ARRAY (298) 61
+FUNCTION (299) 89
+MONITOR (300) 101
+PROCEDURE (301) 85
+PROGRAM (302) 27
+INCLUDE (303) 39
+ATOMIC (304) 83
+FNSTRING (305) 40
+SEND (306) 150
+RECEIVE (307) 204 205
+BROADCAST (308) 153
+EXTERNAL (309) 19
+LOWER_THAN_ELSE (310)
+
+
+Nonterminals, with rules where they appear
+
+$accept (71)
+    on left: 0
+program (72)
+    on left: 1 2 3, on right: 0
+init_outerscope (73)
+    on left: 4, on right: 1 2 3
+outer_decls (74)
+    on left: 5 6, on right: 1 2 6
+outer_decl (75)
+    on left: 7 8 9 10 11 12 13, on right: 5 6
+extern_decl (76)
+    on left: 14 15 16, on right: 13
+extern_var_decl (77)
+    on left: 17, on right: 14
+extern_proc_decl (78)
+    on left: 18, on right: 15
+the_external (79)
+    on left: 19, on right: 17 18 22
+proc_or_func_proto (80)
+    on left: 20 21, on right: 18 23 24
+extern_mon_decl (81)
+    on left: 22, on right: 16
+proto_list (82)
+    on left: 23 24, on right: 22 24
+pgm_decl (83)
+    on left: 25, on right: 2 3
+pgm_hdg_decls (84)
+    on left: 26, on right: 25
+pgm_heading (85)
+    on left: 27, on right: 26
+opt_declarations (86)
+    on left: 28 29, on right: 26 80 86 102
+declarations (87)
+    on left: 30 31, on right: 29 30
+declaration (88)
+    on left: 32 33 34 35 36 37, on right: 30 31
+include_dcl_part (89)
+    on left: 38 40, on right: 7 32
+start_include (90)
+    on left: 39, on right: 38 40
+const_dcl_part (91)
+    on left: 41, on right: 11 33
+const_defs (92)
+    on left: 42 43, on right: 41 42
+const_def (93)
+    on left: 44, on right: 42 43
+constant (94)
+    on left: 45 46 47 48 49 50 51, on right: 44 64 65 67 76
+unsigned_num (95)
+    on left: 52, on right: 45 46 47 187
+type_dcl_part (96)
+    on left: 53, on right: 10 34
+type_defs (97)
+    on left: 54 55, on right: 53 54
+type_def (98)
+    on left: 56, on right: 54 55
+type (99)
+    on left: 57 58 59, on right: 56 61 71
+simple_type (100)
+    on left: 60, on right: 57
+struct_type (101)
+    on left: 61, on right: 58
+index_type (102)
+    on left: 62 63, on right: 61 62
+dimension (103)
+    on left: 64, on right: 62 63
+low (104)
+    on left: 65, on right: 64
+last_atab (105)
+    on left: 66, on right: 61
+string_type (106)
+    on left: 67, on right: 59
+var_dcl_part (107)
+    on left: 68, on right: 12 35
+variable_dcls (108)
+    on left: 69 70, on right: 17 68 69
+variable_dcl (109)
+    on left: 71, on right: 69 70
+newident_list (110)
+    on left: 72, on right: 71 97 98 99
+new_id_list (111)
+    on left: 73 74, on right: 72 73
+opt_initializer (112)
+    on left: 75 76, on right: 71
+proc_dcl_part (113)
+    on left: 77, on right: 8 36
+proc_or_func (114)
+    on left: 78 79, on right: 77
+proc_hdg_decl (115)
+    on left: 80, on right: 78
+proc_proto (116)
+    on left: 81, on right: 20 80
+opt_atomic (117)
+    on left: 82 83, on right: 81 87
+proc_heading (118)
+    on left: 84, on right: 81
+proc_id (119)
+    on left: 85, on right: 84
+func_hdg_decl (120)
+    on left: 86, on right: 79
+func_proto (121)
+    on left: 87, on right: 21 86
+func_heading (122)
+    on left: 88, on right: 87
+func_id (123)
+    on left: 89, on right: 88
+formal_params (124)
+    on left: 90 91, on right: 84 88
+formal_p_sects (125)
+    on left: 92 93, on right: 91 92
+formal_p_sect (126)
+    on left: 94 95 96, on right: 92 93
+param_group (127)
+    on left: 97, on right: 94
+var_param_group (128)
+    on left: 98, on right: 95
+string_param_group (129)
+    on left: 99, on right: 96
+mon_dcl_part (130)
+    on left: 100, on right: 9 37
+mon_heading (131)
+    on left: 101, on right: 22 100
+mon_decl (132)
+    on left: 102, on right: 100
+opt_stmt_part (133)
+    on left: 103 104, on right: 100
+compound_stmt (134)
+    on left: 105, on right: 104 107 113
+the_begin (135)
+    on left: 106, on right: 105
+statement_part (136)
+    on left: 107, on right: 25 78 79
+statements (137)
+    on left: 108 109 110 111, on right: 105 108 120 122
+statement (138)
+    on left: 112 113 114 115 116 117 118 119 120 121 122, on right:
+    108 109 118 119 121 124
+if_expr (139)
+    on left: 123, on right: 117 118
+then_stmt (140)
+    on left: 124, on right: 117 118
+the_else (141)
+    on left: 125, on right: 118
+the_while (142)
+    on left: 126, on right: 119
+while_expr (143)
+    on left: 127, on right: 119
+the_repeat (144)
+    on left: 128, on right: 120
+for_id (145)
+    on left: 129, on right: 131
+for_header (146)
+    on left: 130, on right: 121
+for_id_becomes_expr (147)
+    on left: 131, on right: 130
+cbegin (148)
+    on left: 132, on right: 122
+assignment (149)
+    on left: 133 134, on right: 114
+id_becomes (150)
+    on left: 135, on right: 133
+procedure_call (151)
+    on left: 136, on right: 115
+actual_params (152)
+    on left: 137 138, on right: 136 191
+actuals_list (153)
+    on left: 139 140, on right: 138 139
+actual_param (154)
+    on left: 141 142, on right: 139 140
+pfv_id (155)
+    on left: 143, on right: 136 191
+check_proc (156)
+    on left: 144, on right: 136
+special_proc_call (157)
+    on left: 145 146 147 148 149, on right: 116
+send_call (158)
+    on left: 150, on right: 145
+left_exprparm (159)
+    on left: 151 152, on right: 150 154 158 200 204 205
+broadcast_call (160)
+    on left: 153, on right: 146
+stringconcat_call (161)
+    on left: 154, on right: 147
+right_stringparm (162)
+    on left: 155 156, on right: 154 158 200
+rawstring_parm (163)
+    on left: 157, on right: 151 156 160 207
+stringcopy_call (164)
+    on left: 158, on right: 148
+sprintf_call (165)
+    on left: 159, on right: 149
+sprintf_buf_fmt (166)
+    on left: 160, on right: 159
+sprintf_parmlist (167)
+    on left: 161 162, on right: 159 162
+expr (168)
+    on left: 163 164, on right: 120 123 127 130 131 133 134 141 150
+    152 155 160 161 162 189 202 205 207 208 209 212 213 214
+relational_op (169)
+    on left: 165 166 167 168 169 170, on right: 164
+simple_expr (170)
+    on left: 171 172 173 174, on right: 163 164 175
+left_simp_expr (171)
+    on left: 175, on right: 164 174
+add_op (172)
+    on left: 176 177 178, on right: 174
+term (173)
+    on left: 179 180, on right: 171 172 173 174 181
+left_term (174)
+    on left: 181, on right: 180
+mult_op (175)
+    on left: 182 183 184 185, on right: 180
+factor (176)
+    on left: 186 187 188 189 190, on right: 179 180 190
+variable (177)
+    on left: 191 192 193 194, on right: 186
+check_func (178)
+    on left: 195, on right: 191
+special_func_call (179)
+    on left: 196 197 198 199, on right: 192
+stringcompare_call (180)
+    on left: 200, on right: 196
+stringlength_call (181)
+    on left: 201, on right: 197
+single_exprparm (182)
+    on left: 202 203, on right: 153 201
+receive_call (183)
+    on left: 204 205, on right: 198
+sscanf_call (184)
+    on left: 206, on right: 199
+sscanf_buf_fmt (185)
+    on left: 207, on right: 206
+sscanf_parmlist (186)
+    on left: 208 209, on right: 206 209
+array_var (187)
+    on left: 210, on right: 134 193
+array_id (188)
+    on left: 211, on right: 210
+index_expr (189)
+    on left: 212 213, on right: 210 212
+typecast (190)
+    on left: 214, on right: 194
+ident (191)
+    on left: 215, on right: 48 49 50 60 88 97 98 129 135 143 211
+newident (192)
+    on left: 216, on right: 27 44 56 73 74 101
+
+
+State 0
+
+    0 $accept: . program $end
+
+    $default  reduce using rule 4 (init_outerscope)
+
+    program          go to state 1
+    init_outerscope  go to state 2
+
+
+State 1
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 3
+
+
+State 2
+
+    1 program: init_outerscope . outer_decls
+    2        | init_outerscope . outer_decls pgm_decl
+    3        | init_outerscope . pgm_decl
+
+    CONST     shift, and go to state 4
+    VAR       shift, and go to state 5
+    TYPE      shift, and go to state 6
+    MONITOR   shift, and go to state 7
+    PROGRAM   shift, and go to state 8
+    ATOMIC    shift, and go to state 9
+    EXTERNAL  shift, and go to state 10
+    '#'       shift, and go to state 11
+
+    $default  reduce using rule 82 (opt_atomic)
+
+    outer_decls       go to state 12
+    outer_decl        go to state 13
+    extern_decl       go to state 14
+    extern_var_decl   go to state 15
+    extern_proc_decl  go to state 16
+    the_external      go to state 17
+    extern_mon_decl   go to state 18
+    pgm_decl          go to state 19
+    pgm_hdg_decls     go to state 20
+    pgm_heading       go to state 21
+    include_dcl_part  go to state 22
+    start_include     go to state 23
+    const_dcl_part    go to state 24
+    type_dcl_part     go to state 25
+    var_dcl_part      go to state 26
+    proc_dcl_part     go to state 27
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 34
+    mon_heading       go to state 35
+
+
+State 3
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+State 4
+
+   41 const_dcl_part: CONST . const_defs ';'
+
+    IDENTIFIER  shift, and go to state 36
+
+    const_defs  go to state 37
+    const_def   go to state 38
+    newident    go to state 39
+
+
+State 5
+
+   68 var_dcl_part: VAR . variable_dcls ';'
+
+    IDENTIFIER  shift, and go to state 36
+
+    variable_dcls  go to state 40
+    variable_dcl   go to state 41
+    newident_list  go to state 42
+    new_id_list    go to state 43
+    newident       go to state 44
+
+
+State 6
+
+   53 type_dcl_part: TYPE . type_defs ';'
+
+    IDENTIFIER  shift, and go to state 36
+
+    type_defs  go to state 45
+    type_def   go to state 46
+    newident   go to state 47
+
+
+State 7
+
+  101 mon_heading: MONITOR . newident ';'
+
+    IDENTIFIER  shift, and go to state 36
+
+    newident  go to state 48
+
+
+State 8
+
+   27 pgm_heading: PROGRAM . newident
+
+    IDENTIFIER  shift, and go to state 36
+
+    newident  go to state 49
+
+
+State 9
+
+   83 opt_atomic: ATOMIC .
+
+    $default  reduce using rule 83 (opt_atomic)
+
+
+State 10
+
+   19 the_external: EXTERNAL .
+
+    $default  reduce using rule 19 (the_external)
+
+
+State 11
+
+   39 start_include: '#' . INCLUDE
+
+    INCLUDE  shift, and go to state 50
+
+
+State 12
+
+    1 program: init_outerscope outer_decls .
+    2        | init_outerscope outer_decls . pgm_decl
+    6 outer_decls: outer_decls . outer_decl
+
+    CONST     shift, and go to state 4
+    VAR       shift, and go to state 5
+    TYPE      shift, and go to state 6
+    MONITOR   shift, and go to state 7
+    PROGRAM   shift, and go to state 8
+    ATOMIC    shift, and go to state 9
+    EXTERNAL  shift, and go to state 10
+    '#'       shift, and go to state 11
+
+    $end      reduce using rule 1 (program)
+    $default  reduce using rule 82 (opt_atomic)
+
+    outer_decl        go to state 51
+    extern_decl       go to state 14
+    extern_var_decl   go to state 15
+    extern_proc_decl  go to state 16
+    the_external      go to state 17
+    extern_mon_decl   go to state 18
+    pgm_decl          go to state 52
+    pgm_hdg_decls     go to state 20
+    pgm_heading       go to state 21
+    include_dcl_part  go to state 22
+    start_include     go to state 23
+    const_dcl_part    go to state 24
+    type_dcl_part     go to state 25
+    var_dcl_part      go to state 26
+    proc_dcl_part     go to state 27
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 34
+    mon_heading       go to state 35
+
+
+State 13
+
+    5 outer_decls: outer_decl .
+
+    $default  reduce using rule 5 (outer_decls)
+
+
+State 14
+
+   13 outer_decl: extern_decl .
+
+    $default  reduce using rule 13 (outer_decl)
+
+
+State 15
+
+   14 extern_decl: extern_var_decl .
+
+    $default  reduce using rule 14 (extern_decl)
+
+
+State 16
+
+   15 extern_decl: extern_proc_decl .
+
+    $default  reduce using rule 15 (extern_decl)
+
+
+State 17
+
+   17 extern_var_decl: the_external . VAR variable_dcls ';'
+   18 extern_proc_decl: the_external . proc_or_func_proto
+   22 extern_mon_decl: the_external . mon_heading proto_list END ';'
+
+    VAR      shift, and go to state 53
+    MONITOR  shift, and go to state 7
+    ATOMIC   shift, and go to state 9
+
+    $default  reduce using rule 82 (opt_atomic)
+
+    proc_or_func_proto  go to state 54
+    proc_proto          go to state 55
+    opt_atomic          go to state 31
+    func_proto          go to state 56
+    mon_heading         go to state 57
+
+
+State 18
+
+   16 extern_decl: extern_mon_decl .
+
+    $default  reduce using rule 16 (extern_decl)
+
+
+State 19
+
+    3 program: init_outerscope pgm_decl .
+
+    $default  reduce using rule 3 (program)
+
+
+State 20
+
+   25 pgm_decl: pgm_hdg_decls . statement_part '.'
+
+    SBEGIN  shift, and go to state 58
+
+    compound_stmt   go to state 59
+    the_begin       go to state 60
+    statement_part  go to state 61
+
+
+State 21
+
+   26 pgm_hdg_decls: pgm_heading . ';' opt_declarations
+
+    ';'  shift, and go to state 62
+
+
+State 22
+
+    7 outer_decl: include_dcl_part .
+
+    $default  reduce using rule 7 (outer_decl)
+
+
+State 23
+
+   38 include_dcl_part: start_include . RAWSTRING
+   40                 | start_include . FNSTRING
+
+    RAWSTRING  shift, and go to state 63
+    FNSTRING   shift, and go to state 64
+
+
+State 24
+
+   11 outer_decl: const_dcl_part .
+
+    $default  reduce using rule 11 (outer_decl)
+
+
+State 25
+
+   10 outer_decl: type_dcl_part .
+
+    $default  reduce using rule 10 (outer_decl)
+
+
+State 26
+
+   12 outer_decl: var_dcl_part .
+
+    $default  reduce using rule 12 (outer_decl)
+
+
+State 27
+
+    8 outer_decl: proc_dcl_part .
+
+    $default  reduce using rule 8 (outer_decl)
+
+
+State 28
+
+   77 proc_dcl_part: proc_or_func .
+
+    $default  reduce using rule 77 (proc_dcl_part)
+
+
+State 29
+
+   78 proc_or_func: proc_hdg_decl . statement_part ';'
+
+    SBEGIN  shift, and go to state 58
+
+    compound_stmt   go to state 59
+    the_begin       go to state 60
+    statement_part  go to state 65
+
+
+State 30
+
+   80 proc_hdg_decl: proc_proto . opt_declarations
+
+    CONST    shift, and go to state 4
+    VAR      shift, and go to state 5
+    TYPE     shift, and go to state 6
+    MONITOR  shift, and go to state 7
+    ATOMIC   shift, and go to state 9
+    '#'      shift, and go to state 11
+
+    SBEGIN    reduce using rule 28 (opt_declarations)
+    $default  reduce using rule 82 (opt_atomic)
+
+    opt_declarations  go to state 66
+    declarations      go to state 67
+    declaration       go to state 68
+    include_dcl_part  go to state 69
+    start_include     go to state 23
+    const_dcl_part    go to state 70
+    type_dcl_part     go to state 71
+    var_dcl_part      go to state 72
+    proc_dcl_part     go to state 73
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 74
+    mon_heading       go to state 35
+
+
+State 31
+
+   81 proc_proto: opt_atomic . proc_heading ';'
+   87 func_proto: opt_atomic . func_heading ';'
+
+    FUNCTION   shift, and go to state 75
+    PROCEDURE  shift, and go to state 76
+
+    proc_heading  go to state 77
+    proc_id       go to state 78
+    func_heading  go to state 79
+    func_id       go to state 80
+
+
+State 32
+
+   79 proc_or_func: func_hdg_decl . statement_part ';'
+
+    SBEGIN  shift, and go to state 58
+
+    compound_stmt   go to state 59
+    the_begin       go to state 60
+    statement_part  go to state 81
+
+
+State 33
+
+   86 func_hdg_decl: func_proto . opt_declarations
+
+    CONST    shift, and go to state 4
+    VAR      shift, and go to state 5
+    TYPE     shift, and go to state 6
+    MONITOR  shift, and go to state 7
+    ATOMIC   shift, and go to state 9
+    '#'      shift, and go to state 11
+
+    SBEGIN    reduce using rule 28 (opt_declarations)
+    $default  reduce using rule 82 (opt_atomic)
+
+    opt_declarations  go to state 82
+    declarations      go to state 67
+    declaration       go to state 68
+    include_dcl_part  go to state 69
+    start_include     go to state 23
+    const_dcl_part    go to state 70
+    type_dcl_part     go to state 71
+    var_dcl_part      go to state 72
+    proc_dcl_part     go to state 73
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 74
+    mon_heading       go to state 35
+
+
+State 34
+
+    9 outer_decl: mon_dcl_part .
+
+    $default  reduce using rule 9 (outer_decl)
+
+
+State 35
+
+  100 mon_dcl_part: mon_heading . mon_decl opt_stmt_part ';'
+
+    CONST    shift, and go to state 4
+    VAR      shift, and go to state 5
+    TYPE     shift, and go to state 6
+    MONITOR  shift, and go to state 7
+    ATOMIC   shift, and go to state 9
+    '#'      shift, and go to state 11
+
+    FUNCTION   reduce using rule 82 (opt_atomic)
+    PROCEDURE  reduce using rule 82 (opt_atomic)
+    $default   reduce using rule 28 (opt_declarations)
+
+    opt_declarations  go to state 83
+    declarations      go to state 67
+    declaration       go to state 68
+    include_dcl_part  go to state 69
+    start_include     go to state 23
+    const_dcl_part    go to state 70
+    type_dcl_part     go to state 71
+    var_dcl_part      go to state 72
+    proc_dcl_part     go to state 73
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 74
+    mon_heading       go to state 35
+    mon_decl          go to state 84
+
+
+State 36
+
+  216 newident: IDENTIFIER .
+
+    $default  reduce using rule 216 (newident)
+
+
+State 37
+
+   41 const_dcl_part: CONST const_defs . ';'
+   42 const_defs: const_defs . ';' const_def
+
+    ';'  shift, and go to state 85
+
+
+State 38
+
+   43 const_defs: const_def .
+
+    $default  reduce using rule 43 (const_defs)
+
+
+State 39
+
+   44 const_def: newident . '=' constant
+
+    '='  shift, and go to state 86
+
+
+State 40
+
+   68 var_dcl_part: VAR variable_dcls . ';'
+   69 variable_dcls: variable_dcls . ';' variable_dcl
+
+    ';'  shift, and go to state 87
+
+
+State 41
+
+   70 variable_dcls: variable_dcl .
+
+    $default  reduce using rule 70 (variable_dcls)
+
+
+State 42
+
+   71 variable_dcl: newident_list . ':' type opt_initializer
+
+    ':'  shift, and go to state 88
+
+
+State 43
+
+   72 newident_list: new_id_list .
+   73 new_id_list: new_id_list . ',' newident
+
+    ','  shift, and go to state 89
+
+    $default  reduce using rule 72 (newident_list)
+
+
+State 44
+
+   74 new_id_list: newident .
+
+    $default  reduce using rule 74 (new_id_list)
+
+
+State 45
+
+   53 type_dcl_part: TYPE type_defs . ';'
+   54 type_defs: type_defs . ';' type_def
+
+    ';'  shift, and go to state 90
+
+
+State 46
+
+   55 type_defs: type_def .
+
+    $default  reduce using rule 55 (type_defs)
+
+
+State 47
+
+   56 type_def: newident . '=' type
+
+    '='  shift, and go to state 91
+
+
+State 48
+
+  101 mon_heading: MONITOR newident . ';'
+
+    ';'  shift, and go to state 92
+
+
+State 49
+
+   27 pgm_heading: PROGRAM newident .
+
+    $default  reduce using rule 27 (pgm_heading)
+
+
+State 50
+
+   39 start_include: '#' INCLUDE .
+
+    $default  reduce using rule 39 (start_include)
+
+
+State 51
+
+    6 outer_decls: outer_decls outer_decl .
+
+    $default  reduce using rule 6 (outer_decls)
+
+
+State 52
+
+    2 program: init_outerscope outer_decls pgm_decl .
+
+    $default  reduce using rule 2 (program)
+
+
+State 53
+
+   17 extern_var_decl: the_external VAR . variable_dcls ';'
+
+    IDENTIFIER  shift, and go to state 36
+
+    variable_dcls  go to state 93
+    variable_dcl   go to state 41
+    newident_list  go to state 42
+    new_id_list    go to state 43
+    newident       go to state 44
+
+
+State 54
+
+   18 extern_proc_decl: the_external proc_or_func_proto .
+
+    $default  reduce using rule 18 (extern_proc_decl)
+
+
+State 55
+
+   20 proc_or_func_proto: proc_proto .
+
+    $default  reduce using rule 20 (proc_or_func_proto)
+
+
+State 56
+
+   21 proc_or_func_proto: func_proto .
+
+    $default  reduce using rule 21 (proc_or_func_proto)
+
+
+State 57
+
+   22 extern_mon_decl: the_external mon_heading . proto_list END ';'
+
+    ATOMIC  shift, and go to state 9
+
+    $default  reduce using rule 82 (opt_atomic)
+
+    proc_or_func_proto  go to state 94
+    proto_list          go to state 95
+    proc_proto          go to state 55
+    opt_atomic          go to state 31
+    func_proto          go to state 56
+
+
+State 58
+
+  106 the_begin: SBEGIN .
+
+    $default  reduce using rule 106 (the_begin)
+
+
+State 59
+
+  107 statement_part: compound_stmt .
+
+    $default  reduce using rule 107 (statement_part)
+
+
+State 60
+
+  105 compound_stmt: the_begin . statements END
+
+    error         shift, and go to state 96
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    END  reduce using rule 112 (statement)
+    ';'  reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statements           go to state 109
+    statement            go to state 110
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 61
+
+   25 pgm_decl: pgm_hdg_decls statement_part . '.'
+
+    '.'  shift, and go to state 132
+
+
+State 62
+
+   26 pgm_hdg_decls: pgm_heading ';' . opt_declarations
+
+    CONST    shift, and go to state 4
+    VAR      shift, and go to state 5
+    TYPE     shift, and go to state 6
+    MONITOR  shift, and go to state 7
+    ATOMIC   shift, and go to state 9
+    '#'      shift, and go to state 11
+
+    SBEGIN    reduce using rule 28 (opt_declarations)
+    $default  reduce using rule 82 (opt_atomic)
+
+    opt_declarations  go to state 133
+    declarations      go to state 67
+    declaration       go to state 68
+    include_dcl_part  go to state 69
+    start_include     go to state 23
+    const_dcl_part    go to state 70
+    type_dcl_part     go to state 71
+    var_dcl_part      go to state 72
+    proc_dcl_part     go to state 73
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 74
+    mon_heading       go to state 35
+
+
+State 63
+
+   38 include_dcl_part: start_include RAWSTRING .
+
+    $default  reduce using rule 38 (include_dcl_part)
+
+
+State 64
+
+   40 include_dcl_part: start_include FNSTRING .
+
+    $default  reduce using rule 40 (include_dcl_part)
+
+
+State 65
+
+   78 proc_or_func: proc_hdg_decl statement_part . ';'
+
+    ';'  shift, and go to state 134
+
+
+State 66
+
+   80 proc_hdg_decl: proc_proto opt_declarations .
+
+    $default  reduce using rule 80 (proc_hdg_decl)
+
+
+State 67
+
+   29 opt_declarations: declarations .
+   30 declarations: declarations . declaration
+
+    CONST    shift, and go to state 4
+    VAR      shift, and go to state 5
+    TYPE     shift, and go to state 6
+    MONITOR  shift, and go to state 7
+    ATOMIC   shift, and go to state 9
+    '#'      shift, and go to state 11
+
+    FUNCTION   reduce using rule 82 (opt_atomic)
+    PROCEDURE  reduce using rule 82 (opt_atomic)
+    $default   reduce using rule 29 (opt_declarations)
+
+    declaration       go to state 135
+    include_dcl_part  go to state 69
+    start_include     go to state 23
+    const_dcl_part    go to state 70
+    type_dcl_part     go to state 71
+    var_dcl_part      go to state 72
+    proc_dcl_part     go to state 73
+    proc_or_func      go to state 28
+    proc_hdg_decl     go to state 29
+    proc_proto        go to state 30
+    opt_atomic        go to state 31
+    func_hdg_decl     go to state 32
+    func_proto        go to state 33
+    mon_dcl_part      go to state 74
+    mon_heading       go to state 35
+
+
+State 68
+
+   31 declarations: declaration .
+
+    $default  reduce using rule 31 (declarations)
+
+
+State 69
+
+   32 declaration: include_dcl_part .
+
+    $default  reduce using rule 32 (declaration)
+
+
+State 70
+
+   33 declaration: const_dcl_part .
+
+    $default  reduce using rule 33 (declaration)
+
+
+State 71
+
+   34 declaration: type_dcl_part .
+
+    $default  reduce using rule 34 (declaration)
+
+
+State 72
+
+   35 declaration: var_dcl_part .
+
+    $default  reduce using rule 35 (declaration)
+
+
+State 73
+
+   36 declaration: proc_dcl_part .
+
+    $default  reduce using rule 36 (declaration)
+
+
+State 74
+
+   37 declaration: mon_dcl_part .
+
+    $default  reduce using rule 37 (declaration)
+
+
+State 75
+
+   89 func_id: FUNCTION . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 136
+
+
+State 76
+
+   85 proc_id: PROCEDURE . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 137
+
+
+State 77
+
+   81 proc_proto: opt_atomic proc_heading . ';'
+
+    ';'  shift, and go to state 138
+
+
+State 78
+
+   84 proc_heading: proc_id . formal_params
+
+    '('  shift, and go to state 139
+
+    $default  reduce using rule 90 (formal_params)
+
+    formal_params  go to state 140
+
+
+State 79
+
+   87 func_proto: opt_atomic func_heading . ';'
+
+    ';'  shift, and go to state 141
+
+
+State 80
+
+   88 func_heading: func_id . formal_params ':' ident
+
+    '('  shift, and go to state 139
+
+    $default  reduce using rule 90 (formal_params)
+
+    formal_params  go to state 142
+
+
+State 81
+
+   79 proc_or_func: func_hdg_decl statement_part . ';'
+
+    ';'  shift, and go to state 143
+
+
+State 82
+
+   86 func_hdg_decl: func_proto opt_declarations .
+
+    $default  reduce using rule 86 (func_hdg_decl)
+
+
+State 83
+
+  102 mon_decl: opt_declarations .
+
+    $default  reduce using rule 102 (mon_decl)
+
+
+State 84
+
+  100 mon_dcl_part: mon_heading mon_decl . opt_stmt_part ';'
+
+    SBEGIN  shift, and go to state 58
+    END     shift, and go to state 144
+
+    opt_stmt_part  go to state 145
+    compound_stmt  go to state 146
+    the_begin      go to state 60
+
+
+State 85
+
+   41 const_dcl_part: CONST const_defs ';' .
+   42 const_defs: const_defs ';' . const_def
+
+    IDENTIFIER  shift, and go to state 36
+
+    $default  reduce using rule 41 (const_dcl_part)
+
+    const_def  go to state 147
+    newident   go to state 39
+
+
+State 86
+
+   44 const_def: newident '=' . constant
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+    CHAR          shift, and go to state 149
+    '+'           shift, and go to state 150
+    '-'           shift, and go to state 151
+
+    constant      go to state 152
+    unsigned_num  go to state 153
+    ident         go to state 154
+
+
+State 87
+
+   68 var_dcl_part: VAR variable_dcls ';' .
+   69 variable_dcls: variable_dcls ';' . variable_dcl
+
+    IDENTIFIER  shift, and go to state 36
+
+    $default  reduce using rule 68 (var_dcl_part)
+
+    variable_dcl   go to state 155
+    newident_list  go to state 42
+    new_id_list    go to state 43
+    newident       go to state 44
+
+
+State 88
+
+   71 variable_dcl: newident_list ':' . type opt_initializer
+
+    STRING      shift, and go to state 156
+    IDENTIFIER  shift, and go to state 100
+    ARRAY       shift, and go to state 157
+
+    type         go to state 158
+    simple_type  go to state 159
+    struct_type  go to state 160
+    string_type  go to state 161
+    ident        go to state 162
+
+
+State 89
+
+   73 new_id_list: new_id_list ',' . newident
+
+    IDENTIFIER  shift, and go to state 36
+
+    newident  go to state 163
+
+
+State 90
+
+   53 type_dcl_part: TYPE type_defs ';' .
+   54 type_defs: type_defs ';' . type_def
+
+    IDENTIFIER  shift, and go to state 36
+
+    $default  reduce using rule 53 (type_dcl_part)
+
+    type_def  go to state 164
+    newident  go to state 47
+
+
+State 91
+
+   56 type_def: newident '=' . type
+
+    STRING      shift, and go to state 156
+    IDENTIFIER  shift, and go to state 100
+    ARRAY       shift, and go to state 157
+
+    type         go to state 165
+    simple_type  go to state 159
+    struct_type  go to state 160
+    string_type  go to state 161
+    ident        go to state 162
+
+
+State 92
+
+  101 mon_heading: MONITOR newident ';' .
+
+    $default  reduce using rule 101 (mon_heading)
+
+
+State 93
+
+   17 extern_var_decl: the_external VAR variable_dcls . ';'
+   69 variable_dcls: variable_dcls . ';' variable_dcl
+
+    ';'  shift, and go to state 166
+
+
+State 94
+
+   23 proto_list: proc_or_func_proto .
+
+    $default  reduce using rule 23 (proto_list)
+
+
+State 95
+
+   22 extern_mon_decl: the_external mon_heading proto_list . END ';'
+   24 proto_list: proto_list . proc_or_func_proto
+
+    END     shift, and go to state 167
+    ATOMIC  shift, and go to state 9
+
+    $default  reduce using rule 82 (opt_atomic)
+
+    proc_or_func_proto  go to state 168
+    proc_proto          go to state 55
+    opt_atomic          go to state 31
+    func_proto          go to state 56
+
+
+State 96
+
+  110 statements: error . ';'
+  111           | error . END
+
+    END  shift, and go to state 169
+    ';'  shift, and go to state 170
+
+
+State 97
+
+  154 stringconcat_call: STRINGCONCAT . left_exprparm right_stringparm
+
+    '('  shift, and go to state 171
+
+    left_exprparm  go to state 172
+
+
+State 98
+
+  158 stringcopy_call: STRINGCOPY . left_exprparm right_stringparm
+
+    '('  shift, and go to state 171
+
+    left_exprparm  go to state 173
+
+
+State 99
+
+  160 sprintf_buf_fmt: SPRINTF . '(' expr ',' rawstring_parm
+
+    '('  shift, and go to state 174
+
+
+State 100
+
+  215 ident: IDENTIFIER .
+
+    $default  reduce using rule 215 (ident)
+
+
+State 101
+
+  123 if_expr: IF . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 187
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 102
+
+  128 the_repeat: REPEAT .
+
+    $default  reduce using rule 128 (the_repeat)
+
+
+State 103
+
+  126 the_while: WHILE .
+
+    $default  reduce using rule 126 (the_while)
+
+
+State 104
+
+  129 for_id: FOR . ident
+
+    IDENTIFIER  shift, and go to state 100
+
+    ident  go to state 203
+
+
+State 105
+
+  132 cbegin: CBEGIN .
+
+    $default  reduce using rule 132 (cbegin)
+
+
+State 106
+
+  150 send_call: SEND . left_exprparm ',' expr ')'
+
+    '('  shift, and go to state 171
+
+    left_exprparm  go to state 204
+
+
+State 107
+
+  153 broadcast_call: BROADCAST . single_exprparm
+
+    '('  shift, and go to state 205
+
+    single_exprparm  go to state 206
+
+
+State 108
+
+  113 statement: compound_stmt .
+
+    $default  reduce using rule 113 (statement)
+
+
+State 109
+
+  105 compound_stmt: the_begin statements . END
+  108 statements: statements . ';' statement
+
+    END  shift, and go to state 207
+    ';'  shift, and go to state 208
+
+
+State 110
+
+  109 statements: statement .
+
+    $default  reduce using rule 109 (statements)
+
+
+State 111
+
+  117 statement: if_expr . then_stmt
+  118          | if_expr . then_stmt the_else statement
+
+    THEN  shift, and go to state 209
+
+    then_stmt  go to state 210
+
+
+State 112
+
+  119 statement: the_while . while_expr DO statement
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    while_expr          go to state 211
+    pfv_id              go to state 186
+    expr                go to state 212
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 113
+
+  120 statement: the_repeat . statements UNTIL expr
+
+    error         shift, and go to state 96
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    UNTIL  reduce using rule 112 (statement)
+    ';'    reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statements           go to state 213
+    statement            go to state 110
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 114
+
+  131 for_id_becomes_expr: for_id . BECOMES expr
+
+    BECOMES  shift, and go to state 214
+
+
+State 115
+
+  121 statement: for_header . statement
+
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    $default  reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statement            go to state 215
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 116
+
+  130 for_header: for_id_becomes_expr . TO expr DO
+
+    TO  shift, and go to state 216
+
+
+State 117
+
+  122 statement: cbegin . statements CEND
+
+    error         shift, and go to state 96
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    CEND  reduce using rule 112 (statement)
+    ';'   reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statements           go to state 217
+    statement            go to state 110
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 118
+
+  114 statement: assignment .
+
+    $default  reduce using rule 114 (statement)
+
+
+State 119
+
+  133 assignment: id_becomes . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 218
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 120
+
+  115 statement: procedure_call .
+
+    $default  reduce using rule 115 (statement)
+
+
+State 121
+
+  136 procedure_call: pfv_id . check_proc actual_params
+
+    $default  reduce using rule 144 (check_proc)
+
+    check_proc  go to state 219
+
+
+State 122
+
+  116 statement: special_proc_call .
+
+    $default  reduce using rule 116 (statement)
+
+
+State 123
+
+  145 special_proc_call: send_call .
+
+    $default  reduce using rule 145 (special_proc_call)
+
+
+State 124
+
+  146 special_proc_call: broadcast_call .
+
+    $default  reduce using rule 146 (special_proc_call)
+
+
+State 125
+
+  147 special_proc_call: stringconcat_call .
+
+    $default  reduce using rule 147 (special_proc_call)
+
+
+State 126
+
+  148 special_proc_call: stringcopy_call .
+
+    $default  reduce using rule 148 (special_proc_call)
+
+
+State 127
+
+  149 special_proc_call: sprintf_call .
+
+    $default  reduce using rule 149 (special_proc_call)
+
+
+State 128
+
+  159 sprintf_call: sprintf_buf_fmt . ',' sprintf_parmlist ')'
+
+    ','  shift, and go to state 220
+
+
+State 129
+
+  134 assignment: array_var . BECOMES expr
+
+    BECOMES  shift, and go to state 221
+
+
+State 130
+
+  210 array_var: array_id . '[' index_expr ']'
+
+    '['  shift, and go to state 222
+
+
+State 131
+
+  135 id_becomes: ident . BECOMES
+  143 pfv_id: ident .
+  211 array_id: ident .
+
+    BECOMES  shift, and go to state 223
+
+    '['       reduce using rule 211 (array_id)
+    $default  reduce using rule 143 (pfv_id)
+
+
+State 132
+
+   25 pgm_decl: pgm_hdg_decls statement_part '.' .
+
+    $default  reduce using rule 25 (pgm_decl)
+
+
+State 133
+
+   26 pgm_hdg_decls: pgm_heading ';' opt_declarations .
+
+    $default  reduce using rule 26 (pgm_hdg_decls)
+
+
+State 134
+
+   78 proc_or_func: proc_hdg_decl statement_part ';' .
+
+    $default  reduce using rule 78 (proc_or_func)
+
+
+State 135
+
+   30 declarations: declarations declaration .
+
+    $default  reduce using rule 30 (declarations)
+
+
+State 136
+
+   89 func_id: FUNCTION IDENTIFIER .
+
+    $default  reduce using rule 89 (func_id)
+
+
+State 137
+
+   85 proc_id: PROCEDURE IDENTIFIER .
+
+    $default  reduce using rule 85 (proc_id)
+
+
+State 138
+
+   81 proc_proto: opt_atomic proc_heading ';' .
+
+    $default  reduce using rule 81 (proc_proto)
+
+
+State 139
+
+   91 formal_params: '(' . formal_p_sects ')'
+
+    IDENTIFIER  shift, and go to state 36
+    VAR         shift, and go to state 224
+
+    newident_list       go to state 225
+    new_id_list         go to state 43
+    formal_p_sects      go to state 226
+    formal_p_sect       go to state 227
+    param_group         go to state 228
+    var_param_group     go to state 229
+    string_param_group  go to state 230
+    newident            go to state 44
+
+
+State 140
+
+   84 proc_heading: proc_id formal_params .
+
+    $default  reduce using rule 84 (proc_heading)
+
+
+State 141
+
+   87 func_proto: opt_atomic func_heading ';' .
+
+    $default  reduce using rule 87 (func_proto)
+
+
+State 142
+
+   88 func_heading: func_id formal_params . ':' ident
+
+    ':'  shift, and go to state 231
+
+
+State 143
+
+   79 proc_or_func: func_hdg_decl statement_part ';' .
+
+    $default  reduce using rule 79 (proc_or_func)
+
+
+State 144
+
+  103 opt_stmt_part: END .
+
+    $default  reduce using rule 103 (opt_stmt_part)
+
+
+State 145
+
+  100 mon_dcl_part: mon_heading mon_decl opt_stmt_part . ';'
+
+    ';'  shift, and go to state 232
+
+
+State 146
+
+  104 opt_stmt_part: compound_stmt .
+
+    $default  reduce using rule 104 (opt_stmt_part)
+
+
+State 147
+
+   42 const_defs: const_defs ';' const_def .
+
+    $default  reduce using rule 42 (const_defs)
+
+
+State 148
+
+   52 unsigned_num: UNSIGNED_INT .
+
+    $default  reduce using rule 52 (unsigned_num)
+
+
+State 149
+
+   51 constant: CHAR .
+
+    $default  reduce using rule 51 (constant)
+
+
+State 150
+
+   46 constant: '+' . unsigned_num
+   49         | '+' . ident
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+
+    unsigned_num  go to state 233
+    ident         go to state 234
+
+
+State 151
+
+   47 constant: '-' . unsigned_num
+   50         | '-' . ident
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+
+    unsigned_num  go to state 235
+    ident         go to state 236
+
+
+State 152
+
+   44 const_def: newident '=' constant .
+
+    $default  reduce using rule 44 (const_def)
+
+
+State 153
+
+   45 constant: unsigned_num .
+
+    $default  reduce using rule 45 (constant)
+
+
+State 154
+
+   48 constant: ident .
+
+    $default  reduce using rule 48 (constant)
+
+
+State 155
+
+   69 variable_dcls: variable_dcls ';' variable_dcl .
+
+    $default  reduce using rule 69 (variable_dcls)
+
+
+State 156
+
+   67 string_type: STRING . '[' constant ']'
+
+    '['  shift, and go to state 237
+
+
+State 157
+
+   61 struct_type: ARRAY . '[' index_type ']' last_atab OF type
+
+    '['  shift, and go to state 238
+
+
+State 158
+
+   71 variable_dcl: newident_list ':' type . opt_initializer
+
+    BECOMES  shift, and go to state 239
+
+    $default  reduce using rule 75 (opt_initializer)
+
+    opt_initializer  go to state 240
+
+
+State 159
+
+   57 type: simple_type .
+
+    $default  reduce using rule 57 (type)
+
+
+State 160
+
+   58 type: struct_type .
+
+    $default  reduce using rule 58 (type)
+
+
+State 161
+
+   59 type: string_type .
+
+    $default  reduce using rule 59 (type)
+
+
+State 162
+
+   60 simple_type: ident .
+
+    $default  reduce using rule 60 (simple_type)
+
+
+State 163
+
+   73 new_id_list: new_id_list ',' newident .
+
+    $default  reduce using rule 73 (new_id_list)
+
+
+State 164
+
+   54 type_defs: type_defs ';' type_def .
+
+    $default  reduce using rule 54 (type_defs)
+
+
+State 165
+
+   56 type_def: newident '=' type .
+
+    $default  reduce using rule 56 (type_def)
+
+
+State 166
+
+   17 extern_var_decl: the_external VAR variable_dcls ';' .
+   69 variable_dcls: variable_dcls ';' . variable_dcl
+
+    IDENTIFIER  shift, and go to state 36
+
+    $default  reduce using rule 17 (extern_var_decl)
+
+    variable_dcl   go to state 155
+    newident_list  go to state 42
+    new_id_list    go to state 43
+    newident       go to state 44
+
+
+State 167
+
+   22 extern_mon_decl: the_external mon_heading proto_list END . ';'
+
+    ';'  shift, and go to state 241
+
+
+State 168
+
+   24 proto_list: proto_list proc_or_func_proto .
+
+    $default  reduce using rule 24 (proto_list)
+
+
+State 169
+
+  111 statements: error END .
+
+    $default  reduce using rule 111 (statements)
+
+
+State 170
+
+  110 statements: error ';' .
+
+    $default  reduce using rule 110 (statements)
+
+
+State 171
+
+  151 left_exprparm: '(' . rawstring_parm
+  152              | '(' . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    RAWSTRING      shift, and go to state 242
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    rawstring_parm      go to state 243
+    expr                go to state 244
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 172
+
+  154 stringconcat_call: STRINGCONCAT left_exprparm . right_stringparm
+
+    ','  shift, and go to state 245
+
+    right_stringparm  go to state 246
+
+
+State 173
+
+  158 stringcopy_call: STRINGCOPY left_exprparm . right_stringparm
+
+    ','  shift, and go to state 245
+
+    right_stringparm  go to state 247
+
+
+State 174
+
+  160 sprintf_buf_fmt: SPRINTF '(' . expr ',' rawstring_parm
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 248
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 175
+
+  200 stringcompare_call: STRINGCOMPARE . left_exprparm right_stringparm
+
+    '('  shift, and go to state 171
+
+    left_exprparm  go to state 249
+
+
+State 176
+
+  201 stringlength_call: STRINGLENGTH . single_exprparm
+
+    '('  shift, and go to state 205
+
+    single_exprparm  go to state 250
+
+
+State 177
+
+  207 sscanf_buf_fmt: SSCANF . '(' expr ',' rawstring_parm
+
+    '('  shift, and go to state 251
+
+
+State 178
+
+  188 factor: CHAR .
+
+    $default  reduce using rule 188 (factor)
+
+
+State 179
+
+  214 typecast: INT . '(' expr ')'
+
+    '('  shift, and go to state 252
+
+
+State 180
+
+  190 factor: NOT . factor
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    factor              go to state 253
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 181
+
+  204 receive_call: RECEIVE . left_exprparm ')'
+  205             | RECEIVE . left_exprparm ',' expr ')'
+
+    '('  shift, and go to state 171
+
+    left_exprparm  go to state 254
+
+
+State 182
+
+  172 simple_expr: '+' . term
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    term                go to state 255
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 183
+
+  173 simple_expr: '-' . term
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    term                go to state 256
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 184
+
+  189 factor: '(' . expr ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 257
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 185
+
+  187 factor: unsigned_num .
+
+    $default  reduce using rule 187 (factor)
+
+
+State 186
+
+  191 variable: pfv_id . check_func actual_params
+
+    $default  reduce using rule 195 (check_func)
+
+    check_func  go to state 258
+
+
+State 187
+
+  123 if_expr: IF expr .
+
+    $default  reduce using rule 123 (if_expr)
+
+
+State 188
+
+  163 expr: simple_expr .
+  175 left_simp_expr: simple_expr .
+
+    NE        reduce using rule 175 (left_simp_expr)
+    LE        reduce using rule 175 (left_simp_expr)
+    GE        reduce using rule 175 (left_simp_expr)
+    OR        reduce using rule 175 (left_simp_expr)
+    '='       reduce using rule 175 (left_simp_expr)
+    '+'       reduce using rule 175 (left_simp_expr)
+    '-'       reduce using rule 175 (left_simp_expr)
+    '<'       reduce using rule 175 (left_simp_expr)
+    '>'       reduce using rule 175 (left_simp_expr)
+    $default  reduce using rule 163 (expr)
+
+
+State 189
+
+  164 expr: left_simp_expr . relational_op simple_expr
+  174 simple_expr: left_simp_expr . add_op term
+
+    NE   shift, and go to state 259
+    LE   shift, and go to state 260
+    GE   shift, and go to state 261
+    OR   shift, and go to state 262
+    '='  shift, and go to state 263
+    '+'  shift, and go to state 264
+    '-'  shift, and go to state 265
+    '<'  shift, and go to state 266
+    '>'  shift, and go to state 267
+
+    relational_op  go to state 268
+    add_op         go to state 269
+
+
+State 190
+
+  171 simple_expr: term .
+  181 left_term: term .
+
+    DIV       reduce using rule 181 (left_term)
+    MOD       reduce using rule 181 (left_term)
+    AND       reduce using rule 181 (left_term)
+    '*'       reduce using rule 181 (left_term)
+    $default  reduce using rule 171 (simple_expr)
+
+
+State 191
+
+  180 term: left_term . mult_op factor
+
+    DIV  shift, and go to state 270
+    MOD  shift, and go to state 271
+    AND  shift, and go to state 272
+    '*'  shift, and go to state 273
+
+    mult_op  go to state 274
+
+
+State 192
+
+  179 term: factor .
+
+    $default  reduce using rule 179 (term)
+
+
+State 193
+
+  186 factor: variable .
+
+    $default  reduce using rule 186 (factor)
+
+
+State 194
+
+  192 variable: special_func_call .
+
+    $default  reduce using rule 192 (variable)
+
+
+State 195
+
+  196 special_func_call: stringcompare_call .
+
+    $default  reduce using rule 196 (special_func_call)
+
+
+State 196
+
+  197 special_func_call: stringlength_call .
+
+    $default  reduce using rule 197 (special_func_call)
+
+
+State 197
+
+  198 special_func_call: receive_call .
+
+    $default  reduce using rule 198 (special_func_call)
+
+
+State 198
+
+  199 special_func_call: sscanf_call .
+
+    $default  reduce using rule 199 (special_func_call)
+
+
+State 199
+
+  206 sscanf_call: sscanf_buf_fmt . ',' sscanf_parmlist ')'
+
+    ','  shift, and go to state 275
+
+
+State 200
+
+  193 variable: array_var .
+
+    $default  reduce using rule 193 (variable)
+
+
+State 201
+
+  194 variable: typecast .
+
+    $default  reduce using rule 194 (variable)
+
+
+State 202
+
+  143 pfv_id: ident .
+  211 array_id: ident .
+
+    '['       reduce using rule 211 (array_id)
+    $default  reduce using rule 143 (pfv_id)
+
+
+State 203
+
+  129 for_id: FOR ident .
+
+    $default  reduce using rule 129 (for_id)
+
+
+State 204
+
+  150 send_call: SEND left_exprparm . ',' expr ')'
+
+    ','  shift, and go to state 276
+
+
+State 205
+
+  202 single_exprparm: '(' . expr ')'
+  203                | '(' . RAWSTRING ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    RAWSTRING      shift, and go to state 277
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 278
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 206
+
+  153 broadcast_call: BROADCAST single_exprparm .
+
+    $default  reduce using rule 153 (broadcast_call)
+
+
+State 207
+
+  105 compound_stmt: the_begin statements END .
+
+    $default  reduce using rule 105 (compound_stmt)
+
+
+State 208
+
+  108 statements: statements ';' . statement
+
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    $default  reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statement            go to state 279
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 209
+
+  124 then_stmt: THEN . statement
+
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    $default  reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statement            go to state 280
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 210
+
+  117 statement: if_expr then_stmt .
+  118          | if_expr then_stmt . the_else statement
+
+    ELSE  shift, and go to state 281
+
+    $default  reduce using rule 117 (statement)
+
+    the_else  go to state 282
+
+
+State 211
+
+  119 statement: the_while while_expr . DO statement
+
+    DO  shift, and go to state 283
+
+
+State 212
+
+  127 while_expr: expr .
+
+    $default  reduce using rule 127 (while_expr)
+
+
+State 213
+
+  108 statements: statements . ';' statement
+  120 statement: the_repeat statements . UNTIL expr
+
+    UNTIL  shift, and go to state 284
+    ';'    shift, and go to state 208
+
+
+State 214
+
+  131 for_id_becomes_expr: for_id BECOMES . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 285
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 215
+
+  121 statement: for_header statement .
+
+    $default  reduce using rule 121 (statement)
+
+
+State 216
+
+  130 for_header: for_id_becomes_expr TO . expr DO
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 286
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 217
+
+  108 statements: statements . ';' statement
+  122 statement: cbegin statements . CEND
+
+    CEND  shift, and go to state 287
+    ';'   shift, and go to state 208
+
+
+State 218
+
+  133 assignment: id_becomes expr .
+
+    $default  reduce using rule 133 (assignment)
+
+
+State 219
+
+  136 procedure_call: pfv_id check_proc . actual_params
+
+    '('  shift, and go to state 288
+
+    $default  reduce using rule 137 (actual_params)
+
+    actual_params  go to state 289
+
+
+State 220
+
+  159 sprintf_call: sprintf_buf_fmt ',' . sprintf_parmlist ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    sprintf_parmlist    go to state 290
+    expr                go to state 291
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 221
+
+  134 assignment: array_var BECOMES . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 292
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 222
+
+  210 array_var: array_id '[' . index_expr ']'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 293
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    index_expr          go to state 294
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 223
+
+  135 id_becomes: ident BECOMES .
+
+    $default  reduce using rule 135 (id_becomes)
+
+
+State 224
+
+   98 var_param_group: VAR . newident_list ':' ident
+
+    IDENTIFIER  shift, and go to state 36
+
+    newident_list  go to state 295
+    new_id_list    go to state 43
+    newident       go to state 44
+
+
+State 225
+
+   97 param_group: newident_list . ':' ident
+   99 string_param_group: newident_list . ':' STRING
+
+    ':'  shift, and go to state 296
+
+
+State 226
+
+   91 formal_params: '(' formal_p_sects . ')'
+   92 formal_p_sects: formal_p_sects . ';' formal_p_sect
+
+    ';'  shift, and go to state 297
+    ')'  shift, and go to state 298
+
+
+State 227
+
+   93 formal_p_sects: formal_p_sect .
+
+    $default  reduce using rule 93 (formal_p_sects)
+
+
+State 228
+
+   94 formal_p_sect: param_group .
+
+    $default  reduce using rule 94 (formal_p_sect)
+
+
+State 229
+
+   95 formal_p_sect: var_param_group .
+
+    $default  reduce using rule 95 (formal_p_sect)
+
+
+State 230
+
+   96 formal_p_sect: string_param_group .
+
+    $default  reduce using rule 96 (formal_p_sect)
+
+
+State 231
+
+   88 func_heading: func_id formal_params ':' . ident
+
+    IDENTIFIER  shift, and go to state 100
+
+    ident  go to state 299
+
+
+State 232
+
+  100 mon_dcl_part: mon_heading mon_decl opt_stmt_part ';' .
+
+    $default  reduce using rule 100 (mon_dcl_part)
+
+
+State 233
+
+   46 constant: '+' unsigned_num .
+
+    $default  reduce using rule 46 (constant)
+
+
+State 234
+
+   49 constant: '+' ident .
+
+    $default  reduce using rule 49 (constant)
+
+
+State 235
+
+   47 constant: '-' unsigned_num .
+
+    $default  reduce using rule 47 (constant)
+
+
+State 236
+
+   50 constant: '-' ident .
+
+    $default  reduce using rule 50 (constant)
+
+
+State 237
+
+   67 string_type: STRING '[' . constant ']'
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+    CHAR          shift, and go to state 149
+    '+'           shift, and go to state 150
+    '-'           shift, and go to state 151
+
+    constant      go to state 300
+    unsigned_num  go to state 153
+    ident         go to state 154
+
+
+State 238
+
+   61 struct_type: ARRAY '[' . index_type ']' last_atab OF type
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+    CHAR          shift, and go to state 149
+    '+'           shift, and go to state 150
+    '-'           shift, and go to state 151
+
+    constant      go to state 301
+    unsigned_num  go to state 153
+    index_type    go to state 302
+    dimension     go to state 303
+    low           go to state 304
+    ident         go to state 154
+
+
+State 239
+
+   76 opt_initializer: BECOMES . constant
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+    CHAR          shift, and go to state 149
+    '+'           shift, and go to state 150
+    '-'           shift, and go to state 151
+
+    constant      go to state 305
+    unsigned_num  go to state 153
+    ident         go to state 154
+
+
+State 240
+
+   71 variable_dcl: newident_list ':' type opt_initializer .
+
+    $default  reduce using rule 71 (variable_dcl)
+
+
+State 241
+
+   22 extern_mon_decl: the_external mon_heading proto_list END ';' .
+
+    $default  reduce using rule 22 (extern_mon_decl)
+
+
+State 242
+
+  157 rawstring_parm: RAWSTRING .
+
+    $default  reduce using rule 157 (rawstring_parm)
+
+
+State 243
+
+  151 left_exprparm: '(' rawstring_parm .
+
+    $default  reduce using rule 151 (left_exprparm)
+
+
+State 244
+
+  152 left_exprparm: '(' expr .
+
+    $default  reduce using rule 152 (left_exprparm)
+
+
+State 245
+
+  155 right_stringparm: ',' . expr ')'
+  156                 | ',' . rawstring_parm ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    RAWSTRING      shift, and go to state 242
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    rawstring_parm      go to state 306
+    expr                go to state 307
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 246
+
+  154 stringconcat_call: STRINGCONCAT left_exprparm right_stringparm .
+
+    $default  reduce using rule 154 (stringconcat_call)
+
+
+State 247
+
+  158 stringcopy_call: STRINGCOPY left_exprparm right_stringparm .
+
+    $default  reduce using rule 158 (stringcopy_call)
+
+
+State 248
+
+  160 sprintf_buf_fmt: SPRINTF '(' expr . ',' rawstring_parm
+
+    ','  shift, and go to state 308
+
+
+State 249
+
+  200 stringcompare_call: STRINGCOMPARE left_exprparm . right_stringparm
+
+    ','  shift, and go to state 245
+
+    right_stringparm  go to state 309
+
+
+State 250
+
+  201 stringlength_call: STRINGLENGTH single_exprparm .
+
+    $default  reduce using rule 201 (stringlength_call)
+
+
+State 251
+
+  207 sscanf_buf_fmt: SSCANF '(' . expr ',' rawstring_parm
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 310
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 252
+
+  214 typecast: INT '(' . expr ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 311
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 253
+
+  190 factor: NOT factor .
+
+    $default  reduce using rule 190 (factor)
+
+
+State 254
+
+  204 receive_call: RECEIVE left_exprparm . ')'
+  205             | RECEIVE left_exprparm . ',' expr ')'
+
+    ','  shift, and go to state 312
+    ')'  shift, and go to state 313
+
+
+State 255
+
+  172 simple_expr: '+' term .
+  181 left_term: term .
+
+    DIV       reduce using rule 181 (left_term)
+    MOD       reduce using rule 181 (left_term)
+    AND       reduce using rule 181 (left_term)
+    '*'       reduce using rule 181 (left_term)
+    $default  reduce using rule 172 (simple_expr)
+
+
+State 256
+
+  173 simple_expr: '-' term .
+  181 left_term: term .
+
+    DIV       reduce using rule 181 (left_term)
+    MOD       reduce using rule 181 (left_term)
+    AND       reduce using rule 181 (left_term)
+    '*'       reduce using rule 181 (left_term)
+    $default  reduce using rule 173 (simple_expr)
+
+
+State 257
+
+  189 factor: '(' expr . ')'
+
+    ')'  shift, and go to state 314
+
+
+State 258
+
+  191 variable: pfv_id check_func . actual_params
+
+    '('  shift, and go to state 288
+
+    $default  reduce using rule 137 (actual_params)
+
+    actual_params  go to state 315
+
+
+State 259
+
+  170 relational_op: NE .
+
+    $default  reduce using rule 170 (relational_op)
+
+
+State 260
+
+  168 relational_op: LE .
+
+    $default  reduce using rule 168 (relational_op)
+
+
+State 261
+
+  169 relational_op: GE .
+
+    $default  reduce using rule 169 (relational_op)
+
+
+State 262
+
+  178 add_op: OR .
+
+    $default  reduce using rule 178 (add_op)
+
+
+State 263
+
+  165 relational_op: '=' .
+
+    $default  reduce using rule 165 (relational_op)
+
+
+State 264
+
+  176 add_op: '+' .
+
+    $default  reduce using rule 176 (add_op)
+
+
+State 265
+
+  177 add_op: '-' .
+
+    $default  reduce using rule 177 (add_op)
+
+
+State 266
+
+  166 relational_op: '<' .
+
+    $default  reduce using rule 166 (relational_op)
+
+
+State 267
+
+  167 relational_op: '>' .
+
+    $default  reduce using rule 167 (relational_op)
+
+
+State 268
+
+  164 expr: left_simp_expr relational_op . simple_expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    simple_expr         go to state 316
+    left_simp_expr      go to state 317
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 269
+
+  174 simple_expr: left_simp_expr add_op . term
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    term                go to state 318
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 270
+
+  183 mult_op: DIV .
+
+    $default  reduce using rule 183 (mult_op)
+
+
+State 271
+
+  184 mult_op: MOD .
+
+    $default  reduce using rule 184 (mult_op)
+
+
+State 272
+
+  185 mult_op: AND .
+
+    $default  reduce using rule 185 (mult_op)
+
+
+State 273
+
+  182 mult_op: '*' .
+
+    $default  reduce using rule 182 (mult_op)
+
+
+State 274
+
+  180 term: left_term mult_op . factor
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    factor              go to state 319
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 275
+
+  206 sscanf_call: sscanf_buf_fmt ',' . sscanf_parmlist ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 320
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    sscanf_parmlist     go to state 321
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 276
+
+  150 send_call: SEND left_exprparm ',' . expr ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 322
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 277
+
+  203 single_exprparm: '(' RAWSTRING . ')'
+
+    ')'  shift, and go to state 323
+
+
+State 278
+
+  202 single_exprparm: '(' expr . ')'
+
+    ')'  shift, and go to state 324
+
+
+State 279
+
+  108 statements: statements ';' statement .
+
+    $default  reduce using rule 108 (statements)
+
+
+State 280
+
+  124 then_stmt: THEN statement .
+
+    $default  reduce using rule 124 (then_stmt)
+
+
+State 281
+
+  125 the_else: ELSE .
+
+    $default  reduce using rule 125 (the_else)
+
+
+State 282
+
+  118 statement: if_expr then_stmt the_else . statement
+
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    $default  reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statement            go to state 325
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 283
+
+  119 statement: the_while while_expr DO . statement
+
+    STRINGCONCAT  shift, and go to state 97
+    STRINGCOPY    shift, and go to state 98
+    SPRINTF       shift, and go to state 99
+    IDENTIFIER    shift, and go to state 100
+    IF            shift, and go to state 101
+    REPEAT        shift, and go to state 102
+    WHILE         shift, and go to state 103
+    FOR           shift, and go to state 104
+    CBEGIN        shift, and go to state 105
+    SBEGIN        shift, and go to state 58
+    SEND          shift, and go to state 106
+    BROADCAST     shift, and go to state 107
+
+    $default  reduce using rule 112 (statement)
+
+    compound_stmt        go to state 108
+    the_begin            go to state 60
+    statement            go to state 326
+    if_expr              go to state 111
+    the_while            go to state 112
+    the_repeat           go to state 113
+    for_id               go to state 114
+    for_header           go to state 115
+    for_id_becomes_expr  go to state 116
+    cbegin               go to state 117
+    assignment           go to state 118
+    id_becomes           go to state 119
+    procedure_call       go to state 120
+    pfv_id               go to state 121
+    special_proc_call    go to state 122
+    send_call            go to state 123
+    broadcast_call       go to state 124
+    stringconcat_call    go to state 125
+    stringcopy_call      go to state 126
+    sprintf_call         go to state 127
+    sprintf_buf_fmt      go to state 128
+    array_var            go to state 129
+    array_id             go to state 130
+    ident                go to state 131
+
+
+State 284
+
+  120 statement: the_repeat statements UNTIL . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 327
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 285
+
+  131 for_id_becomes_expr: for_id BECOMES expr .
+
+    $default  reduce using rule 131 (for_id_becomes_expr)
+
+
+State 286
+
+  130 for_header: for_id_becomes_expr TO expr . DO
+
+    DO  shift, and go to state 328
+
+
+State 287
+
+  122 statement: cbegin statements CEND .
+
+    $default  reduce using rule 122 (statement)
+
+
+State 288
+
+  138 actual_params: '(' . actuals_list ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    RAWSTRING      shift, and go to state 329
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    actuals_list        go to state 330
+    actual_param        go to state 331
+    pfv_id              go to state 186
+    expr                go to state 332
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 289
+
+  136 procedure_call: pfv_id check_proc actual_params .
+
+    $default  reduce using rule 136 (procedure_call)
+
+
+State 290
+
+  159 sprintf_call: sprintf_buf_fmt ',' sprintf_parmlist . ')'
+  162 sprintf_parmlist: sprintf_parmlist . ',' expr
+
+    ','  shift, and go to state 333
+    ')'  shift, and go to state 334
+
+
+State 291
+
+  161 sprintf_parmlist: expr .
+
+    $default  reduce using rule 161 (sprintf_parmlist)
+
+
+State 292
+
+  134 assignment: array_var BECOMES expr .
+
+    $default  reduce using rule 134 (assignment)
+
+
+State 293
+
+  213 index_expr: expr .
+
+    $default  reduce using rule 213 (index_expr)
+
+
+State 294
+
+  210 array_var: array_id '[' index_expr . ']'
+  212 index_expr: index_expr . ',' expr
+
+    ']'  shift, and go to state 335
+    ','  shift, and go to state 336
+
+
+State 295
+
+   98 var_param_group: VAR newident_list . ':' ident
+
+    ':'  shift, and go to state 337
+
+
+State 296
+
+   97 param_group: newident_list ':' . ident
+   99 string_param_group: newident_list ':' . STRING
+
+    STRING      shift, and go to state 338
+    IDENTIFIER  shift, and go to state 100
+
+    ident  go to state 339
+
+
+State 297
+
+   92 formal_p_sects: formal_p_sects ';' . formal_p_sect
+
+    IDENTIFIER  shift, and go to state 36
+    VAR         shift, and go to state 224
+
+    newident_list       go to state 225
+    new_id_list         go to state 43
+    formal_p_sect       go to state 340
+    param_group         go to state 228
+    var_param_group     go to state 229
+    string_param_group  go to state 230
+    newident            go to state 44
+
+
+State 298
+
+   91 formal_params: '(' formal_p_sects ')' .
+
+    $default  reduce using rule 91 (formal_params)
+
+
+State 299
+
+   88 func_heading: func_id formal_params ':' ident .
+
+    $default  reduce using rule 88 (func_heading)
+
+
+State 300
+
+   67 string_type: STRING '[' constant . ']'
+
+    ']'  shift, and go to state 341
+
+
+State 301
+
+   65 low: constant . DOTDOT
+
+    DOTDOT  shift, and go to state 342
+
+
+State 302
+
+   61 struct_type: ARRAY '[' index_type . ']' last_atab OF type
+   62 index_type: index_type . ',' dimension
+
+    ']'  shift, and go to state 343
+    ','  shift, and go to state 344
+
+
+State 303
+
+   63 index_type: dimension .
+
+    $default  reduce using rule 63 (index_type)
+
+
+State 304
+
+   64 dimension: low . constant
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+    CHAR          shift, and go to state 149
+    '+'           shift, and go to state 150
+    '-'           shift, and go to state 151
+
+    constant      go to state 345
+    unsigned_num  go to state 153
+    ident         go to state 154
+
+
+State 305
+
+   76 opt_initializer: BECOMES constant .
+
+    $default  reduce using rule 76 (opt_initializer)
+
+
+State 306
+
+  156 right_stringparm: ',' rawstring_parm . ')'
+
+    ')'  shift, and go to state 346
+
+
+State 307
+
+  155 right_stringparm: ',' expr . ')'
+
+    ')'  shift, and go to state 347
+
+
+State 308
+
+  160 sprintf_buf_fmt: SPRINTF '(' expr ',' . rawstring_parm
+
+    RAWSTRING  shift, and go to state 242
+
+    rawstring_parm  go to state 348
+
+
+State 309
+
+  200 stringcompare_call: STRINGCOMPARE left_exprparm right_stringparm .
+
+    $default  reduce using rule 200 (stringcompare_call)
+
+
+State 310
+
+  207 sscanf_buf_fmt: SSCANF '(' expr . ',' rawstring_parm
+
+    ','  shift, and go to state 349
+
+
+State 311
+
+  214 typecast: INT '(' expr . ')'
+
+    ')'  shift, and go to state 350
+
+
+State 312
+
+  205 receive_call: RECEIVE left_exprparm ',' . expr ')'
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 351
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 313
+
+  204 receive_call: RECEIVE left_exprparm ')' .
+
+    $default  reduce using rule 204 (receive_call)
+
+
+State 314
+
+  189 factor: '(' expr ')' .
+
+    $default  reduce using rule 189 (factor)
+
+
+State 315
+
+  191 variable: pfv_id check_func actual_params .
+
+    $default  reduce using rule 191 (variable)
+
+
+State 316
+
+  164 expr: left_simp_expr relational_op simple_expr .
+  175 left_simp_expr: simple_expr .
+
+    OR        reduce using rule 175 (left_simp_expr)
+    '+'       reduce using rule 175 (left_simp_expr)
+    '-'       reduce using rule 175 (left_simp_expr)
+    $default  reduce using rule 164 (expr)
+
+
+State 317
+
+  174 simple_expr: left_simp_expr . add_op term
+
+    OR   shift, and go to state 262
+    '+'  shift, and go to state 264
+    '-'  shift, and go to state 265
+
+    add_op  go to state 269
+
+
+State 318
+
+  174 simple_expr: left_simp_expr add_op term .
+  181 left_term: term .
+
+    DIV       reduce using rule 181 (left_term)
+    MOD       reduce using rule 181 (left_term)
+    AND       reduce using rule 181 (left_term)
+    '*'       reduce using rule 181 (left_term)
+    $default  reduce using rule 174 (simple_expr)
+
+
+State 319
+
+  180 term: left_term mult_op factor .
+
+    $default  reduce using rule 180 (term)
+
+
+State 320
+
+  208 sscanf_parmlist: expr .
+
+    $default  reduce using rule 208 (sscanf_parmlist)
+
+
+State 321
+
+  206 sscanf_call: sscanf_buf_fmt ',' sscanf_parmlist . ')'
+  209 sscanf_parmlist: sscanf_parmlist . ',' expr
+
+    ','  shift, and go to state 352
+    ')'  shift, and go to state 353
+
+
+State 322
+
+  150 send_call: SEND left_exprparm ',' expr . ')'
+
+    ')'  shift, and go to state 354
+
+
+State 323
+
+  203 single_exprparm: '(' RAWSTRING ')' .
+
+    $default  reduce using rule 203 (single_exprparm)
+
+
+State 324
+
+  202 single_exprparm: '(' expr ')' .
+
+    $default  reduce using rule 202 (single_exprparm)
+
+
+State 325
+
+  118 statement: if_expr then_stmt the_else statement .
+
+    $default  reduce using rule 118 (statement)
+
+
+State 326
+
+  119 statement: the_while while_expr DO statement .
+
+    $default  reduce using rule 119 (statement)
+
+
+State 327
+
+  120 statement: the_repeat statements UNTIL expr .
+
+    $default  reduce using rule 120 (statement)
+
+
+State 328
+
+  130 for_header: for_id_becomes_expr TO expr DO .
+
+    $default  reduce using rule 130 (for_header)
+
+
+State 329
+
+  142 actual_param: RAWSTRING .
+
+    $default  reduce using rule 142 (actual_param)
+
+
+State 330
+
+  138 actual_params: '(' actuals_list . ')'
+  139 actuals_list: actuals_list . ',' actual_param
+
+    ','  shift, and go to state 355
+    ')'  shift, and go to state 356
+
+
+State 331
+
+  140 actuals_list: actual_param .
+
+    $default  reduce using rule 140 (actuals_list)
+
+
+State 332
+
+  141 actual_param: expr .
+
+    $default  reduce using rule 141 (actual_param)
+
+
+State 333
+
+  162 sprintf_parmlist: sprintf_parmlist ',' . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 357
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 334
+
+  159 sprintf_call: sprintf_buf_fmt ',' sprintf_parmlist ')' .
+
+    $default  reduce using rule 159 (sprintf_call)
+
+
+State 335
+
+  210 array_var: array_id '[' index_expr ']' .
+
+    $default  reduce using rule 210 (array_var)
+
+
+State 336
+
+  212 index_expr: index_expr ',' . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 358
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 337
+
+   98 var_param_group: VAR newident_list ':' . ident
+
+    IDENTIFIER  shift, and go to state 100
+
+    ident  go to state 359
+
+
+State 338
+
+   99 string_param_group: newident_list ':' STRING .
+
+    $default  reduce using rule 99 (string_param_group)
+
+
+State 339
+
+   97 param_group: newident_list ':' ident .
+
+    $default  reduce using rule 97 (param_group)
+
+
+State 340
+
+   92 formal_p_sects: formal_p_sects ';' formal_p_sect .
+
+    $default  reduce using rule 92 (formal_p_sects)
+
+
+State 341
+
+   67 string_type: STRING '[' constant ']' .
+
+    $default  reduce using rule 67 (string_type)
+
+
+State 342
+
+   65 low: constant DOTDOT .
+
+    $default  reduce using rule 65 (low)
+
+
+State 343
+
+   61 struct_type: ARRAY '[' index_type ']' . last_atab OF type
+
+    $default  reduce using rule 66 (last_atab)
+
+    last_atab  go to state 360
+
+
+State 344
+
+   62 index_type: index_type ',' . dimension
+
+    UNSIGNED_INT  shift, and go to state 148
+    IDENTIFIER    shift, and go to state 100
+    CHAR          shift, and go to state 149
+    '+'           shift, and go to state 150
+    '-'           shift, and go to state 151
+
+    constant      go to state 301
+    unsigned_num  go to state 153
+    dimension     go to state 361
+    low           go to state 304
+    ident         go to state 154
+
+
+State 345
+
+   64 dimension: low constant .
+
+    $default  reduce using rule 64 (dimension)
+
+
+State 346
+
+  156 right_stringparm: ',' rawstring_parm ')' .
+
+    $default  reduce using rule 156 (right_stringparm)
+
+
+State 347
+
+  155 right_stringparm: ',' expr ')' .
+
+    $default  reduce using rule 155 (right_stringparm)
+
+
+State 348
+
+  160 sprintf_buf_fmt: SPRINTF '(' expr ',' rawstring_parm .
+
+    $default  reduce using rule 160 (sprintf_buf_fmt)
+
+
+State 349
+
+  207 sscanf_buf_fmt: SSCANF '(' expr ',' . rawstring_parm
+
+    RAWSTRING  shift, and go to state 242
+
+    rawstring_parm  go to state 362
+
+
+State 350
+
+  214 typecast: INT '(' expr ')' .
+
+    $default  reduce using rule 214 (typecast)
+
+
+State 351
+
+  205 receive_call: RECEIVE left_exprparm ',' expr . ')'
+
+    ')'  shift, and go to state 363
+
+
+State 352
+
+  209 sscanf_parmlist: sscanf_parmlist ',' . expr
+
+    UNSIGNED_INT   shift, and go to state 148
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    pfv_id              go to state 186
+    expr                go to state 364
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 353
+
+  206 sscanf_call: sscanf_buf_fmt ',' sscanf_parmlist ')' .
+
+    $default  reduce using rule 206 (sscanf_call)
+
+
+State 354
+
+  150 send_call: SEND left_exprparm ',' expr ')' .
+
+    $default  reduce using rule 150 (send_call)
+
+
+State 355
+
+  139 actuals_list: actuals_list ',' . actual_param
+
+    UNSIGNED_INT   shift, and go to state 148
+    RAWSTRING      shift, and go to state 329
+    STRINGCOMPARE  shift, and go to state 175
+    STRINGLENGTH   shift, and go to state 176
+    SSCANF         shift, and go to state 177
+    IDENTIFIER     shift, and go to state 100
+    CHAR           shift, and go to state 178
+    INT            shift, and go to state 179
+    NOT            shift, and go to state 180
+    RECEIVE        shift, and go to state 181
+    '+'            shift, and go to state 182
+    '-'            shift, and go to state 183
+    '('            shift, and go to state 184
+
+    unsigned_num        go to state 185
+    actual_param        go to state 365
+    pfv_id              go to state 186
+    expr                go to state 332
+    simple_expr         go to state 188
+    left_simp_expr      go to state 189
+    term                go to state 190
+    left_term           go to state 191
+    factor              go to state 192
+    variable            go to state 193
+    special_func_call   go to state 194
+    stringcompare_call  go to state 195
+    stringlength_call   go to state 196
+    receive_call        go to state 197
+    sscanf_call         go to state 198
+    sscanf_buf_fmt      go to state 199
+    array_var           go to state 200
+    array_id            go to state 130
+    typecast            go to state 201
+    ident               go to state 202
+
+
+State 356
+
+  138 actual_params: '(' actuals_list ')' .
+
+    $default  reduce using rule 138 (actual_params)
+
+
+State 357
+
+  162 sprintf_parmlist: sprintf_parmlist ',' expr .
+
+    $default  reduce using rule 162 (sprintf_parmlist)
+
+
+State 358
+
+  212 index_expr: index_expr ',' expr .
+
+    $default  reduce using rule 212 (index_expr)
+
+
+State 359
+
+   98 var_param_group: VAR newident_list ':' ident .
+
+    $default  reduce using rule 98 (var_param_group)
+
+
+State 360
+
+   61 struct_type: ARRAY '[' index_type ']' last_atab . OF type
+
+    OF  shift, and go to state 366
+
+
+State 361
+
+   62 index_type: index_type ',' dimension .
+
+    $default  reduce using rule 62 (index_type)
+
+
+State 362
+
+  207 sscanf_buf_fmt: SSCANF '(' expr ',' rawstring_parm .
+
+    $default  reduce using rule 207 (sscanf_buf_fmt)
+
+
+State 363
+
+  205 receive_call: RECEIVE left_exprparm ',' expr ')' .
+
+    $default  reduce using rule 205 (receive_call)
+
+
+State 364
+
+  209 sscanf_parmlist: sscanf_parmlist ',' expr .
+
+    $default  reduce using rule 209 (sscanf_parmlist)
+
+
+State 365
+
+  139 actuals_list: actuals_list ',' actual_param .
+
+    $default  reduce using rule 139 (actuals_list)
+
+
+State 366
+
+   61 struct_type: ARRAY '[' index_type ']' last_atab OF . type
+
+    STRING      shift, and go to state 156
+    IDENTIFIER  shift, and go to state 100
+    ARRAY       shift, and go to state 157
+
+    type         go to state 367
+    simple_type  go to state 159
+    struct_type  go to state 160
+    string_type  go to state 161
+    ident        go to state 162
+
+
+State 367
+
+   61 struct_type: ARRAY '[' index_type ']' last_atab OF type .
+
+    $default  reduce using rule 61 (struct_type)

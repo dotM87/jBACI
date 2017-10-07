@@ -1,7 +1,7 @@
 #
-if [ #1 == "" ];
+ if [ "$#" -eq  "0" ]
 then
-java -jar ./jbaci.jar #1.cm
+   java -jar ./jbaci.jar 
 else
-java -jar ./jbaci.jar
+   java -jar ./jbaci.jar  $1.cm
 fi

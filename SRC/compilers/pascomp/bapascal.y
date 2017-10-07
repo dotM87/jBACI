@@ -1,5 +1,5 @@
 %{
-       /* yacc grammar for BenAri Concurrent Pascal */
+       /* yacc grammar for BACI Concurrent Pascal */
        /* based on the Pascal grammar from the      */
        /* primost.cs.wisc.edu compiler archive      */
 #include <stdio.h>
@@ -28,7 +28,7 @@ extern   void  global_init(int argc, char** argv);
 
 extern   int fprintf(FILE*,const char*,...);
 extern   int printf(const char*,...);
-extern   int free(void*);
+/* extern   int free(void*); */
 extern   void yyerror(char*);
 extern   int yylex(void); 
 extern   int atoi(char*);
@@ -38,7 +38,7 @@ void add_var_init(int* curr_var, int tix, int level, int value);
 
 #define YYDEBUG 1
 
-char  comp_tail[] = {"BenAri Pascal PCODE Compiler, "};
+char  comp_tail[] = {"Pascal to PCODE Compiler in C, "};
 extern char  comp_date[];  /* set in date.c on compilation day */
 
 char  source_suffix[] = {".pm"};
@@ -119,10 +119,6 @@ int main_declared = 0;  /* 1 if the PROGRAM keyword has been seen */
 
 int in_proc_decl;       /* 1 if in a procedure or function decl, 0 otherwise */
 
-int graphics_count = 0; /* Count of parameters for graphics procedures */ /*Moti*/
-int linda_count = 0; /* Count of parameters for linda procedures */ /*Moti*/
-int linda_mode = 0; /* Mode: 0=(value,value), 1=(var,value), 2=(value,var), 3=(var,var) */ /*Moti*/
-const	int	formal = -32767;	/* Indicator of empty or formal parameter */ /*Moti*/
 
 #define emit_push_addr(x)  (\
 emit2(((x).normal ? LOAD_ADDR : LOAD_VALUE), (x).lev, (x).adr))
@@ -134,8 +130,6 @@ emit2(((x).normal ? LOAD_ADDR : LOAD_VALUE), (x).lev, (x).adr))
 %token UNSIGNED_INT 
 %token STRING RAWSTRING STRINGCONCAT STRINGCOMPARE STRINGCOPY STRINGLENGTH
 %token SSCANF SPRINTF
-%token CREATE MAKEVISIBLE MOVETO MOVEBY CHANGECOLOR    	/*Moti*/
-%token POSTNOTE REMOVENOTE READNOTE REMOVENOTEEQ READNOTEEQ /*Moti*/
 %token IDENTIFIER CHAR
 %token INT
 %token NE LE GE BECOMES DIV MOD OR AND NOT DOTDOT
@@ -615,15 +609,7 @@ opt_initializer  :  /* empty */
          $$ = new_expr();
          expr[$$].typ = consttype;
          expr[$$].adr = $2;
-      } 
-      | BECOMES IDENTIFIER '(' constant ')'        /*Moti*/
-      {                                            /*Moti*/
-         if (strcmp(lastident, "init") != 0)      /*Moti*/ 
-		yyerror("Invalid initialization of semaphore");   /*Moti*/
-         $$ = new_expr();                          /*Moti*/
-         expr[$$].typ = consttype;                 /*Moti*/
-         expr[$$].adr = $4;                        /*Moti*/
-      }                                            /*Moti*/
+      }
       ;
 
 proc_dcl_part  : proc_or_func
@@ -726,7 +712,7 @@ func_id  : FUNCTION IDENTIFIER
          }
          $$ = prt = enter(lastident, (external? ext_function: function)
                            ,real_level,vis_level);
-         if (in_mon_decl) tab[prt].mon = mtab[mon] - last_predeclared; /*Moti*/ /* Fixed in baci distribution */
+         if (in_mon_decl) tab[prt].mon = mtab[mon] - last_predeclared;
          enter_block(&last_btab,&level,prt);
       }
       ;
@@ -975,9 +961,7 @@ cbegin   :  CBEGIN
 assignment  : id_becomes expr
       {
          gen_exprval($2);
-	 if (  (tab[$1].typ == expr[$2].typ) ||                        /*Moti*/  /* Allow implicit cast int <-> char */ 
-	       ((tab[$1].typ == ints) && (expr[$2].typ == chars)) ||   /*Moti*/
-	       ((tab[$1].typ == chars) && (expr[$2].typ == ints))) {   /*Moti*/
+         if (tab[$1].typ == expr[$2].typ) {
             if ((tab[$1].typ == sems)||(tab[$1].typ == bsems)|| 
                 (tab[$1].typ == conds))
                yyerror("Cannot assign to SEMAPHORE or CONDITION");
@@ -1013,7 +997,7 @@ id_becomes  :  ident BECOMES
          switch (tab[$1].obj) {
          case ext_variable:
          case variable:
-            if ((tab[$1].typ == sems)||(tab[$1].typ == sems))
+            if ((tab[$1].typ == sems)||(tab[$1].typ == bsems))
                yyerror("Must use INITIALSEM to initialize a SEMAPHORE");
             else
                emit2((tab[$1].normal ? LOAD_ADDR : LOAD_VALUE),
@@ -1093,10 +1077,6 @@ actual_param   : expr    /* which could be a variable or a proc/fn id */
              (tab[last_pf].adr == SP_WRITELN))){
                emit1(WRITE_RAWSTRING,tmp);
          }
-         else if (first_stringerr){
-            yyerror("RAW STRING parameter not allowed");
-            first_stringerr = 0;
-         }
          parmct++;
       }
       ;
@@ -1117,7 +1097,7 @@ check_proc  :  /* no syntax */
             else{
                pfstack[toppfs].tix = last_pf = last_pfv;
                pfstack[toppfs].pct = parmct = 0;
-               first_stringerr = first_parmcterr = 1;
+               first_parmcterr = 1;
                if (tab[last_pf].lev != -1){ /* regular proc call */
                   if ((tab[last_pf].mon)&&(tab[prt].mon)&&
                       (tab[last_pf].mon != tab[prt].mon))
@@ -1137,8 +1117,6 @@ special_proc_call  :  send_call
       |  stringconcat_call 
       |  stringcopy_call
       |  sprintf_call
-      |  graphics_call   /*Moti*/
-      |  linda_call      /*Moti*/
       ;
 
 send_call  :  SEND  left_exprparm  ','  expr  ')'
@@ -1274,9 +1252,10 @@ sprintf_buf_fmt  :  SPRINTF  '('  expr  ','  rawstring_parm
 
 sprintf_parmlist  :  expr
          {  
-            if ((expr[$1].typ != ints)&&(expr[$1].typ != strings))
+            if ((expr[$1].typ != ints)&&(expr[$1].typ != strings)&&
+                (expr[$1].typ != chars))
                yyerror(
-            "sprintf parameter must be either of type 'int' or type 'string'");
+            "sprintf parameter must be either of type 'char', 'int' or type 'string'");
             if (expr[$1].typ == strings)
                emit_push_addr(expr[$1]);
             else
@@ -1286,9 +1265,10 @@ sprintf_parmlist  :  expr
          }
       |  sprintf_parmlist  ','  expr
          {  
-            if ((expr[$3].typ != ints)&&(expr[$3].typ != strings))
+            if ((expr[$3].typ != ints)&&(expr[$3].typ != strings)&&
+                (expr[$3].typ != chars))
                yyerror(
-            "sprintf parameter must be either of type 'int' or type 'string'");
+            "sprintf parameter must be either of type 'char', 'int' or type 'string'");
             if (expr[$3].typ == strings)
                emit_push_addr(expr[$1]);
             else
@@ -1297,187 +1277,6 @@ sprintf_parmlist  :  expr
             free_expr($3);
          }
       ; 
-
-/*Moti*/ /* Graphics: from here down to ... */      
-      
-graphics_call : create_call 
-	| make_visible_call 
-	| moveto_call 
-	| moveby_call 
-	| changecolor_call
-	;
-
-
-create_call : CREATE graphics_params
-	{
-	if (graphics_count != 7) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;
-	emit(CREATE_OP);
-	}
-	;
-	
-moveto_call : MOVETO graphics_params
-	{
-	if (graphics_count != 3) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;
-	emit(MOVETO_OP);
-	}
-	;
-	
-moveby_call : MOVEBY graphics_params
-	{
-	if (graphics_count != 3) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;
-	emit(MOVEBY_OP);
-	}
-	;
-	
-make_visible_call : MAKEVISIBLE graphics_params
-	{
-	if (graphics_count != 2) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;  
-	emit(MAKEVISIBLE_OP);
-	}
-	; 
-
-changecolor_call : CHANGECOLOR graphics_params
-	{
-	if (graphics_count != 2) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;    
-	emit(CHANGECOLOR_OP);
-	}
-	; 
-	
-graphics_params  :  '(' graphics_list ')'
-      ;
-
-graphics_list   : graphics_list ',' graphics_param
-      | graphics_param
-      ; 
-
-graphics_param   : expr 
-	{
-	if (expr[$1].typ != ints) yyerror("graphics parameters must be of integer type");
-	graphics_count++;
-	gen_exprval($1);
-	free_expr($1); 
-	}
-	;
-	
-/*Moti*/ /* ... here */
-
-/*Moti*/ /* Linda: from here down to ... */      
-
-linda_call : 
-	post_call 
-	| remove_call 
-	| read_call 
-	| removeeq_call 
-	| readeq_call 
-	;
-
-post_call : POSTNOTE linda_value_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	emit(POSTNOTE_OP);
-	}
-	;
-	
-remove_call : REMOVENOTE linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	emit2(REMOVENOTE_OP,0,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-read_call : READNOTE linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	emit2(REMOVENOTE_OP,1,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-removeeq_call : REMOVENOTEEQ linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	linda_mode = 3;
-	emit2(REMOVENOTE_OP,0,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-readeq_call : READNOTEEQ linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	linda_mode = 3;
-	emit2(REMOVENOTE_OP,1,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-linda_value_params  :  '(' linda_value_list ')'
-      ;
-
-linda_var_params  :  '(' linda_var_list ')'
-      ;
-
-linda_value_list   : linda_value_list ',' linda_value_param
-      | linda_value_param
-      ; 
-
-linda_var_list   : linda_value_param
-	| linda_value_param ',' linda_var_list_1
-      ; 
-
-linda_var_list_1   : linda_var_list_1 ',' linda_var_param
-	| linda_var_param 
-      ; 
-      
-linda_value_param   : expr 
-	{
-	if (linda_count > 2) yyerror("Only three Linda parameters allowed");
-	else if ((linda_count == 0) && (expr[$1].typ != chars)) yyerror("first Linda parameter must be of char type");
-	else if ((linda_count >  0) && (expr[$1].typ != ints)) yyerror("other Linda parameters must be of integer type");
-	linda_count++;
-	gen_exprval($1);
-	free_expr($1); 
-	}
-	;
-
-linda_var_param   : ident '='
-	{
-	if (linda_count > 2) yyerror("Only three Linda parameters allowed");
-	else if (tab[$1].typ != ints) yyerror("other Linda parameters must be of integer type");
-	emit2(LOAD_ADDR, tab[$$].lev,tab[$$].adr);
-	linda_mode = linda_mode + linda_count;
-	linda_count++;
-	free_expr($1); 
-	}
-	|
-	ident 
-	{
-	if (linda_count > 2) yyerror("Only three Linda parameters allowed");
-	else if (tab[$1].typ != ints) yyerror("other Linda parameters must be of integer type");
-	emit2(LOAD_ADDR, tab[$$].lev,tab[$$].adr);
-	linda_count++;
-	free_expr($1); 
-	}
-	;
-
-/*Moti*/ /* ... here */
-
 
 expr  : simple_expr
       | left_simp_expr relational_op simple_expr
@@ -1691,7 +1490,7 @@ check_func  :  /* no syntax */
             else{  /* legal func call */
                pfstack[toppfs].tix = last_pf = last_pfv;
                pfstack[toppfs].pct = parmct = 0;
-               first_stringerr = first_parmcterr = 1;
+               first_parmcterr = 1;
                if (tab[last_pf].lev != -1){ /* regular proc call */
                   if ((tab[last_pf].mon)&&(tab[prt].mon)&&
                       (tab[last_pf].mon != tab[prt].mon))
@@ -1857,7 +1656,7 @@ sscanf_parmlist  :  expr
 
 array_var :  array_id '[' index_expr ']'
       {
-         expr[$1].ref = sizeof(int)*atab[last_aref].elsize;
+         expr[$1].ref = last_aref;
          expr[$1].arelt = 1;
          expr[$1].typ = last_eltyp;
          topars--;
@@ -1971,125 +1770,7 @@ void add_var_init(int* curr_var, int tix, int level, int value)
 
 /*
  *
- *  $Log: bapascal.y,v $
- *
- *  Revision 3.3  2004/07/18 Moti
- *  Linda syntax
- *
- *  Revision 3.2  2003/10/12 Moti
- *  Linda primitives
- *                                  
- *  Revision 3.1  2003/06/15 Moti
- *  backward compatibility of source
- *                                  
- *  Revision 3.0  2003/04/03 Moti   
- *  changes for graphics procedures 
- *
- *  Revision 2.16  2003/05/13 14:01:23  bynum
- *  add boolean initializers, fix proc nesting
- *
- *  Revision 2.15  2002/05/02 13:23:11  bynum
- *  add genutil.h include
- *
- *  Revision 2.14  2001/08/01 13:38:39  bynum
- *  move tab[].adr setting to proc_proto production (for extern procs)
- *
- *  Revision 2.13  2001/07/26 21:19:23  bynum
- *  add ext_function check in the code for the check_func production
- *
- *  Revision 2.12  2001/07/13 19:29:49  bynum
- *  add if-tests to prevent emitting CALL_MONINIT for ext_monitor,
- *  add globtabs.h include
- *
- *  Revision 2.11  2000/08/03 20:57:24  bynum
- *  remove writetab.h include
- *
- *  Revision 2.10  2000/06/02 19:29:14  bynum
- *  add error msg when a function call is attempted in a cobegin block
- *
- *  Revision 2.9  1999/07/06 17:22:08  bynum
- *  add stmts to RECEIVE_OP and RECEIVE_ID productions to set
- *  type of receive func to int
- *
- *  Revision 2.8  1998/11/23 22:55:19  bynum
- *  fix code emission order for the FOR loop parms
- *
- *  Revision 2.7  1998/10/28 21:38:31  bynum
- *  fix initialization, add semaphore, binary semaphore initialization
- *
- *  Revision 2.6  1998/07/23 17:14:56  bynum
- *  remove storing last_tab into btab[main}.last at the END. stmt.  It
- *  caused the btab[main].last parm to be invalid.
- *
- *  Revision 2.5  1997/12/16 19:41:43  bynum
- *  fix $-references in several rules
- *
- *  Revision 2.4  1997/12/16 02:53:26  bynum
- *  change tab[$2].mon ref to tab[$1].mon when emitting ENTERMON on proc entry
- *
- * Revision 2.3  1997/10/21  06:37:10  bynum
- * add sscanf, sprintf rules, move dist_stmt rule into special_proc_call rule
- *
- * Revision 2.2  1997/10/18  19:19:15  bynum
- * add EXTERN support, add last_atab production to find last array dim in atab
- *
- * Revision 2.1  1997/07/10  17:06:55  bynum
- * fix procedure, function, program entry point problems, fix parmct error
- *
- * Revision 2.0  1997/07/09  11:51:50  bynum
- * make PROGRAM optional, add EXTERNALs, add initializers
- *
- * Revision 1.15  1997/06/20  10:05:12  bynum
- * add send, receive, broadcast, int() typecast
- *
- * Revision 1.14  1997/06/17  05:43:15  bynum
- * add string suppor
- *
- * Revision 1.13  1997/04/02  09:22:09  bynum
- * change yyerror() to use 'lasttoken' instead of 'yytext'
- *
- * Revision 1.12  1997/03/25  14:52:43  bynum
- * incorporate changes in the include directory, add prototypes to silence
- * gcc -Wall
- *
- * Revision 1.11  1996/03/06  13:47:19  bynum
- * add extern to yyin,yyout decls
- *
- * Revision 1.10  1995/09/19  14:54:51  bynum
- * move declaration of 'comp_date' array to date.c
- *
- * Revision 1.9  1995/09/07  14:36:15  bynum
- * move in some variables declared in bacglobs.h, change includes
- * to the new structure of the ../include directory, remove 'fatal'
- * and 'warning' code
- *
- * Revision 1.8  1995/08/29  16:49:03  bynum
- * get rid of shift/reduce conflict on if-then-else
- *
- * Revision 1.7  1995/07/12  10:45:47  bynum
- * add productions to handle '#include <..>' and '#include ".."'
- * constructs, add code to block recursive file includes
- *
- * Revision 1.6  1995/07/09  19:25:00  bynum
- * add 'arstack' for stacking 'atab' references in parsing array
- * variables
- *
- * Revision 1.5  1995/07/06  14:17:20  bynum
- * change 'last_pf' to parsing stack ref $1 where possible to prevent
- * ambiguity, guard 'parmct' and 'last_pf' assignments when toppfs < 0,
- * replace PCODE emission for std procs with 'stdproc_pcode' calls
- *
- * Revision 1.4  1995/07/04  08:58:17  bynum
- * add pfstack to handle nested proc/function calls, fix parsing level of
- * fcn name, set 'ref' field of function tab entry to 0 in a fcn call,
- * break yyerror output to two separate lines
- *
- * Revision 1.3  1995/06/30  14:01:00  bynum
- * add 'atomic' keyword and supporting data items
- *
- * Revision 1.2  1995/06/22  06:39:57  bynum
- * add include_dcl_part production, code to handle include files, modify
- * yyerror to accommodate include files
+ *  $Id: bapascal.y,v 2.21 2007/06/01 18:47:03 bynum Exp $
  *
  *
  */

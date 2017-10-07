@@ -41,7 +41,7 @@ extern int yydebug;
 extern int in_include;  /* yyparse signals entry into #include with this */
 
 /* do it the way flex wants it */
-int  baci_yyinput(unsigned char* buf, int maxsize);
+int  baci_yyinput(char* buf, int maxsize);
 #undef YY_INPUT
 #define YY_INPUT(buf,result,maxsize) (result = baci_yyinput(buf,maxsize))
 extern FILE* yyin;
@@ -50,6 +50,7 @@ extern FILE* yyin;
 %%
 %array
 \n                ;
+\r                ;  /* avoid MS-DOS EOL burp */
 [ \t\32]+         ;
 "//".*\n          ;    
 "/*"              { comment(); }
@@ -87,8 +88,6 @@ init                    { strcpy(lasttoken,yytext);return(INIT); }
 int                     { strcpy(lasttoken,yytext);return(INT); }
 main                    { strcpy(lasttoken,yytext);return(MAIN); }
 monitor                 { strcpy(lasttoken,yytext);return(MONITOR); }
-nbcin                   { strcpy(lasttoken,yytext);return(NBCIN); }    /*Moti*/
-parbegin                { strcpy(lasttoken,yytext);return(CBEGIN); }   /*Moti*/
 return                  { strcpy(lasttoken,yytext);return(RETURN); }
 sprintf                 { strcpy(lasttoken,yytext);return(SPRINTF); }
 sscanf                  { strcpy(lasttoken,yytext);return(SSCANF); }
@@ -104,18 +103,6 @@ while                   { strcpy(lasttoken,yytext);return(WHILE); }
 send                    { strcpy(lasttoken,yytext);return(SEND); }
 receive                 { strcpy(lasttoken,yytext);return(RECEIVE); }
 broadcast               { strcpy(lasttoken,yytext);return(BROADCAST); }
-create 			{ strcpy(lasttoken,yytext); return(CREATE); }        /*Moti*/
-makevisible	  	{ strcpy(lasttoken,yytext); return(MAKEVISIBLE); }   /*Moti*/
-moveto 			{ strcpy(lasttoken,yytext); return(MOVETO); }        /*Moti*/
-moveby 			{ strcpy(lasttoken,yytext); return(MOVEBY); }        /*Moti*/
-changecolor	  	{ strcpy(lasttoken,yytext); return(CHANGECOLOR); }   /*Moti*/
-
-postnote	  	{ strcpy(lasttoken,yytext); return(POSTNOTE); }   /*Moti*/
-removenote	  	{ strcpy(lasttoken,yytext); return(REMOVENOTE); }   /*Moti*/
-readnote	  	{ strcpy(lasttoken,yytext); return(READNOTE); }   /*Moti*/
-
-removenoteeq	  	{ strcpy(lasttoken,yytext); return(REMOVENOTEEQ); }   /*Moti*/
-readnoteeq	  	{ strcpy(lasttoken,yytext); return(READNOTEEQ); }   /*Moti*/
 
 [a-zA-Z_][a-zA-Z0-9_]* { 
       store_ident(yytext);
@@ -277,7 +264,7 @@ char nextch()
    subsequent include files occurs in bac.y, the grammar, and closing
    the files occurs in the FLEX <<EOF>> specification rule above.
 */
-int  baci_yyinput(unsigned char* buf, int maxsize)
+int  baci_yyinput(char* buf, int maxsize)
 {
    int i = 0;
    char c;
@@ -355,7 +342,7 @@ char get_escape()
          }
       } while (reading);
    }
-   return ((esc < 256) ? esc : 0x20);
+   return esc;
 }
 
 
@@ -421,111 +408,7 @@ void store_ident(char *s)
 
 /*
  *
- *  $Log: bac.l,v $
- *
- *  Revision 3.3  2004/02/26 Moti
- *  Non-blocking read
- *
- *  Revision 3.2  2003/10/12 Moti 
- *  Linda primitives
- *                                  
- *  Revision 3.1  2003/06/15 Moti
- *  backward compatibility of source
- *                                  
- *  Revision 3.0  2003/04/03 Moti   
- *  changes for graphics procedures 
- *
- *  Revision 2.13  2002/05/02 13:28:42  bynum
- *  add string.h include
- *
- *  Revision 2.12  2001/07/13 19:27:45  bynum
- *  add globtabs.h include
- *
- *  Revision 2.11  1998/12/16 17:33:08  bynum
- *  make first parm of baci_yyinput unsigned char*
- *
- *  Revision 2.10  1998/11/26 22:44:06  bynum
- *  add nextch() routine, fix handling of long lines, long comments,
- *  and comments spanning multiple lines
- *
- *  Revision 2.9  1997/11/26 20:59:22  bynum
- *  add code to comment() to check for EOF
- *
- *  Revision 2.8  1997/11/20 01:56:01  bynum
- *  add (char)EOF typecasts for AIX
- *
- *  Revision 2.7  1997/11/19 14:16:33  bynum
- *  fix baci_yyinput() so that it accepts an emacs-produced file that has
- *  an EOF with no preceding newline
- *
- * Revision 2.6  1997/11/03  19:40:13  bynum
- * make declaration of fwrite acceptable to AIX, add sys/types.h include
- *
- * Revision 2.5  1997/10/27  06:55:51  bynum
- * change malloc, realloc declaraion to #ifdef __TURBOC__ include stdlib.h
- *
- * Revision 2.4  1997/10/26  20:05:53  bynum
- * add extern declarations for malloc and realloc
- *
- * Revision 2.3  1997/10/21  06:32:25  bynum
- * expand numbertext array to 256
- *
- * Revision 2.2  1997/09/04  10:52:25  bynum
- * add sscanf, sprintf
- *
- * Revision 2.1  1997/07/10  17:26:32  bynum
- * switch from fatal() to cfatal()
- *
- * Revision 2.0  1997/07/02  13:05:09  bynum
- * add extern
- *
- * Revision 1.15  1997/06/20  10:01:57  bynum
- * add send, receive, broadcast
- *
- * Revision 1.14  1997/06/17  05:26:48  bynum
- * add escaped characters to raw strings
- *
- * Revision 1.13  1997/06/02  06:56:30  bynum
- * add string type
- *
- * Revision 1.12  1997/05/13  10:16:16  bynum
- * enlarge MAXIDENT constant
- *
- * Revision 1.11  1997/04/01  12:41:13  bynum
- * add 'lasttoken', underscores
- *
- * Revision 1.10  1997/03/31  15:10:51  bynum
- * add tolerance to underscores in identifiers
- *
- * Revision 1.9  1997/03/26  20:41:35  bynum
- * remove isatty prototype
- *
- * Revision 1.8  1997/03/25  14:47:32  bynum
- * incorporate name changes in include directory, add prototypes to
- * silence complaints from gcc -Wall
- *
- * Revision 1.7  1997/02/04  07:00:18  bynum
- * switch to FLEX
- *
- * Revision 1.6  1996/03/06  13:54:37  bynum
- * add #ifdef MSDOS for ytab.h include
- *
- * Revision 1.5  1995/09/07  14:25:49  bynum
- * change to use new ../include directory structure, libba.a library
- *
- * Revision 1.4  1995/09/06  13:56:16  bynum
- * add 'const'
- *
- * Revision 1.3  1995/09/05  14:29:06  bynum
- * add CIN DEFAULT RETURN GTGT tokens
- *
- * Revision 1.2  1995/08/26  11:04:13  bynum
- * add octal, binary, hex number input, C++ output stream tokens, ++, --,
- * add 'lastident' FIFO string buffer
- *
- * Revision 1.1  1995/08/14  15:40:48  bynum
- * Initial revision
- *
+ *  $Id: bac.l,v 2.17 2007/06/02 12:12:22 bynum Exp $
  *
  */
 

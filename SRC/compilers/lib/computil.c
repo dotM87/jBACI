@@ -103,7 +103,7 @@ ALFA  tmpid;
    j = btab[display[vislevel]].last; /* name is at "vislevel" static level */
    l = j;
    while (strcmp(tab[j].name,tmpid)) j = tab[j].link;
-   if ((j != 0)&&(tab[j].lev == vislevel)) {
+   if (j != 0) {
       sprintf(ubuf,"Duplicate identifier '%s' at level %d",tmpid,vislevel);
       yyerror(ubuf);
       return(0);
@@ -257,6 +257,7 @@ int   i;
       if (expr[i].free){
          expr[i].obj = constant;
          expr[i].typ = notyp;
+         expr[i].tix = -1;
          expr[i].adr = expr[i].ref = 0; 
          expr[i].lev = expr[i].normal = expr[i].result_used = 0;
          expr[i].arelt = expr[i].isval = expr[i].free = 0;
@@ -412,19 +413,18 @@ int   pcode;
       switch (tab[px].adr) {
       case SP_READ:
       case SP_READLN:
-      case SP_NBREAD:
          if (pct > 0) {
             if ((expr[ex].obj != variable)&&(expr[ex].obj != ext_variable))
                yyerror("Input item must be a 'variable'");
             else if ((expr[ex].typ != ints)&&(expr[ex].typ != chars)&&
                      (expr[ex].typ != notyp))
                yyerror("Input item must be of type 'int' or 'integer' or 'char'");
-            else if (expr[ex].arelt)          /*Moti*/  
-               emit1(READ,expr[ex].typ);       /*Moti*/ /* Read to array element not implemented */
-	    else { 
+            else if (expr[ex].arelt)
+               emit1(READ,expr[ex].typ);
+            else { 
                emit2((expr[ex].normal ? LOAD_ADDR : LOAD_VALUE),
                   expr[ex].lev, expr[ex].adr);
-               emit2(READ, tab[px].adr==SP_NBREAD, expr[ex].typ); /*Moti*/ /* Non-blocking read */
+               emit1(READ,expr[ex].typ);
             }
          }
          break;
@@ -714,9 +714,15 @@ int store_string(char * str, int* sx)
    /* was stored                                                     */
 {
 
+   char buf[512];
    extern char laststring[];
    int t;
    int slen, oldsx, newsx;
+   int i;
+   int len = strlen(str);
+   /* first ASCII-ize the string */
+   for (i = 0; i< len; i++)
+      if (!isascii(str[i])) str[i] = '?';
    if (*sx > 0) {
       t = 0;
       while (t < *sx) {
@@ -776,7 +782,7 @@ void check_unresolved_externs()
    char name[30];
    char what[30];
    name[0] = '\0';
-   for(ix = 0; ix < last_tab; ix++) {
+   for(ix = 0; ix <= last_tab; ix++) {
       switch (tab[ix].obj) {
          case ext_procedure:
             strcpy(name,tab[ix].name);
@@ -893,6 +899,23 @@ static void write_pcode(char *pcode_fname, char *comp_pname, char *filename_line
    fclose(pcode);
 }  /*  of write_pcode */ 
 
+void check_expr_list()
+{
+   extern int last_predeclared;
+   int i;
+   printf("List of in-use exprs\n");
+   for (i = 0; i < EXPRSIZE; i++)
+      if (!expr[i].free) {
+         printf("Expression %d in use:  obj %s  type %s  tix %d name %s\n",
+            i,objnames[expr[i].obj],typenames[expr[i].typ],
+            expr[i].tix-last_predeclared,
+            tab[expr[i].tix].name);
+         printf("    adr %x   ref %d  lev %d  arelt %d  isval %d  result_used %d\n",
+            expr[i].adr,expr[i].ref,expr[i].lev,expr[i].arelt,expr[i].isval,
+            expr[i].result_used);
+      }
+}
+
   /* main pgm for the BenAri Compilers */
 
 int main(int argc,char **argv)
@@ -921,82 +944,12 @@ int main(int argc,char **argv)
    }
    write_pcode(pcode_fname,comp_pname,filename_line);
    fprintf(stderr,"Compilation listing is stored in %s\n",list_fname);
+   /*check_expr_list(); uncomment to check for non-free expr's */
    return(retval);
 }
 
 /*
  *
- *  $Log: computil.c,v $
- *  Revision 1.22  2004/02/16 Moti
- *  Nonblocking read added
- *
- *  Revision 1.21  2003/10/16 Moti
- *  Read to array element in pascal not implemented
- *
- *  Revision 1.20  2002/05/02 13:14:51  bynum
- *  move stacksize to genutil.c
- *
- *  Revision 1.19  2002/05/02 11:38:12  bynum
- *  add stacksize function
- *
- *  Revision 1.18  2001/11/16 13:44:46  bynum
- *  zero result_used field in new_expr proc
- *
- *  Revision 1.17  2001/08/03 15:06:34  bynum
- *  add cases for ext_variable to each if(obj != variable) test throughout
- *
- *  Revision 1.16  2001/07/13 19:41:28  bynum
- *  allow for ext_variable in procparm, add lastlc variable in write_pcode
- *
- *  Revision 1.15  2001/06/06 21:10:18  bynum
- *  add ../include to include filenames to help Borlanc C++ 3.0 find them
- *
- *  Revision 1.14  2001/02/09 15:08:32  bynum
- *  add code to ensure that btab[].last >= btab[].lastpar
- *
- *  Revision 1.13  2000/08/04 15:37:11  bynum
- *  change last_dbg_ix to last_dbg
- *
- *  Revision 1.12  2000/08/03 20:51:41  bynum
- *  move write_identifier_table, write_block_table, and write_pcode from
- *  writetab.c (only used by BACI compilers)
- *
- *  Revision 1.11  2000/06/02 19:25:44  bynum
- *  add cnonfatal() proc
- *
- *  Revision 1.10  1998/07/05 22:39:47  bynum
- *  switch from last_line_no global vbl to a field of the InpuFile struct to
- *  correct errors in the dbg output when there are included files
- *
- *  Revision 1.9  1997/10/24 09:35:57  bynum
- *  add semicolon to empty default case
- *
- * Revision 1.8  1997/07/10  17:11:00  bynum
- * convert fatal to stdarg, switch from t to last_tab, b to last_btab,
- * a to last_atab, sx to stab_size
- *
- * Revision 1.7  1997/07/02  14:03:01  bynum
- * fix fatal() to accept a variable number of args with stdarg.h
- *
- * Revision 1.6  1997/06/17  05:30:28  bynum
- * add string support, save debugging information more concisely
- *
- * Revision 1.5  1997/03/25  14:17:12  bynum
- * incorporate LIB dir name changes, extra declarations called for
- * by gcc -Wall option
- *
- * Revision 1.4  1997/02/04  05:58:11  bynum
- * add %d to format string in duplicate id error msg
- *
- * Revision 1.3  1995/11/15  16:58:42  bynum
- * correct malformed yyerror message
- *
- * Revision 1.2  1995/09/07  16:04:24  bynum
- * typecast all of the NULLs in the 'fatal' calls to get the fussy gcc on
- * the RS/6000's of our backs
- *
- * Revision 1.1  1995/09/07  15:11:19  bynum
- * Initial revision
- *
+ *  $Id: computil.c,v 1.23 2007/06/01 17:49:03 bynum Exp $
  *
  */

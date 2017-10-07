@@ -90,6 +90,7 @@ Y  [Yy]
 Z  [Zz]
 %%
 \n                   ;
+\r                   ;     /* get rid of MS-DOS end-of-line burp */
 [ \t\32]             ;
 "//".*\n             ;
 "{"                  { comment(); }
@@ -128,10 +129,7 @@ Z  [Zz]
 {N}{O}{T}         { strcpy(lasttoken,yytext); return(NOT); }
 {O}{F}            { strcpy(lasttoken,yytext); return(OF); }
 {O}{R}            { strcpy(lasttoken,yytext); return(OR); }
-{P}{A}{R}{B}{E}{G}{I}{N}   { strcpy(lasttoken,yytext); return(CBEGIN); }         /*Moti*/
-{P}{A}{R}{E}{N}{D}      { strcpy(lasttoken,yytext); return(CEND); }              /*Moti*/
-{P}{R}{O}{C}{E}{D}{U}{R}{E}   { strcpy(lasttoken,yytext); return(PROCEDURE);  }  
-{P}{R}{O}{C}{E}{S}{S}   { strcpy(lasttoken,yytext); return(PROCEDURE);  }        /*Moti*/
+{P}{R}{O}{C}{E}{D}{U}{R}{E}   { strcpy(lasttoken,yytext); return(PROCEDURE);  }
 {P}{R}{O}{G}{R}{A}{M}      { strcpy(lasttoken,yytext); return(PROGRAM); }
 {R}{E}{P}{E}{A}{T}      { strcpy(lasttoken,yytext); return(REPEAT);  }
 {S}{P}{R}{I}{N}{T}{F}   { strcpy(lasttoken,yytext); return(SPRINTF); }
@@ -154,20 +152,6 @@ Z  [Zz]
 {S}{E}{N}{D}      { strcpy(lasttoken,yytext); return(SEND); }
 {R}{E}{C}{E}{I}{V}{E}   { strcpy(lasttoken,yytext); return(RECEIVE); }
 {B}{R}{O}{A}{D}{C}{A}{S}{T}   { strcpy(lasttoken,yytext); return(BROADCAST); }
-
-{C}{R}{E}{A}{T}{E}  			{ strcpy(lasttoken,yytext); return(CREATE); }        /*Moti*/
-{M}{A}{K}{E}{V}{I}{S}{I}{B}{L}{E}  	{ strcpy(lasttoken,yytext); return(MAKEVISIBLE); }   /*Moti*/
-{M}{O}{V}{E}{T}{O}  			{ strcpy(lasttoken,yytext); return(MOVETO); }        /*Moti*/
-{M}{O}{V}{E}{B}{Y}  			{ strcpy(lasttoken,yytext); return(MOVEBY); }        /*Moti*/
-{C}{H}{A}{N}{G}{E}{C}{O}{L}{O}{R}  	{ strcpy(lasttoken,yytext); return(CHANGECOLOR); }   /*Moti*/
-
-{P}{O}{S}{T}{N}{O}{T}{E}	  	{ strcpy(lasttoken,yytext); return(POSTNOTE); }   /*Moti*/
-{R}{E}{M}{O}{V}{E}{N}{O}{T}{E}	  	{ strcpy(lasttoken,yytext); return(REMOVENOTE); }   /*Moti*/
-{R}{E}{A}{D}{N}{O}{T}{E}	  	{ strcpy(lasttoken,yytext); return(READNOTE); }   /*Moti*/
-
-{R}{E}{M}{O}{V}{E}{N}{O}{T}{E}{E}{Q}  	{ strcpy(lasttoken,yytext); return(REMOVENOTEEQ); }   /*Moti*/
-{R}{E}{A}{D}{N}{O}{T}{E}{E}{Q}	  	{ strcpy(lasttoken,yytext); return(READNOTEEQ); }   /*Moti*/
-
 
 [_a-zA-Z][a-zA-Z0-9_]*     { char *p;
       strcpy(lasttoken,yytext); 
@@ -404,7 +388,7 @@ char get_escape()
          }
       } while (reading);
    }
-   return ((esc < 256) ? esc : 0x20);
+   return esc;
 }
 
 void get_string(char termch)
@@ -447,92 +431,11 @@ char c,*p=laststring;
       } /* switch */
    }
 }
+   
+
 
 /*
  *
- *  $Log: bapascal.l,v $
- *
- *  Revision 3.2  2003/10/12 Moti 
- *  Linda primitives
- *                                  
- *  Revision 3.1  2003/06/15 Moti 
- *  backward compatibility of source
- *                                  
- *  Revision 3.0  2003/04/03 Moti   
- *  changes for graphics procedures 
- *
- *  Revision 2.9  2002/05/02 13:22:57  bynum
- *  add string.h include
- *
- *  Revision 2.8  2001/07/13 19:29:18  bynum
- *  add globtabs.h include
- *
- *  Revision 2.7  1998/11/26 22:49:44  bynum
- *  add nextch() routine, fix handling of long comments, long lines,
- *  and comments spanning multiple lines
- *
- *  Revision 2.6  1997/11/26 21:01:02  bynum
- *  add code to comment() to check for EOF
- *
- *  Revision 2.5  1997/11/20 01:55:39  bynum
- *  add (char)EOF typecasts for AIX
- *
- *  Revision 2.4  1997/11/20 00:46:18  bynum
- *  fix baci_yyinput() to accept a file with EOF and no preceding EOLN
- *
- *  Revision 2.3  1997/11/04 01:22:13  bynum
- *  change fwrite declaration to make it acceptable to all platforms, (incl AIX)
- *
- * Revision 2.1.1.1  1997/10/27  06:59:28  bynum
- * change malloc, realloc declaraion to #ifdef __TURBOC__ include stdlib.h
- *
- * Revision 2.1  1997/10/21  06:34:43  bynum
- * add sprintf, sscanf, hex unsigned ints, ' string delimiters
- *
- * Revision 2.0  1997/07/09  11:47:00  bynum
- * add EXTERNAL
- *
- * Revision 1.14  1997/06/20  10:04:55  bynum
- * add send, receive, broadcast
- *
- * Revision 1.13  1997/06/17  05:41:43  bynum
- * add string support, switch from ' to " as string delimiter, add
- * escape character support in raw strings
- *
- * Revision 1.12  1997/04/02  09:21:01  bynum
- * add 'lasttoken' to hold last token for yyparse (FLEX destroys yytext)
- *
- * Revision 1.11  1997/03/26  20:50:20  bynum
- * remove isatty, tolower prototypes
- *
- * Revision 1.10  1997/03/25  14:52:10  bynum
- * incorporate changes in the include directory, add prototypes to silence
- * gcc -Wall
- *
- * Revision 1.9  1997/03/01  05:35:12  bynum
- * switch to FLEX
- *
- * Revision 1.8  1996/03/06  13:52:47  bynum
- * add #ifdef MSDOS for ytab.h include
- *
- * Revision 1.7  1995/09/07  14:35:27  bynum
- * change includes to use the new structure of the ../include directory
- *
- * Revision 1.6  1995/08/14  15:14:02  bynum
- * fix problem of non-terminated filename string in include stmt
- *
- * Revision 1.5  1995/07/12  10:43:55  bynum
- * add fname_strings() proc and 'in_include' variable to handle
- * '#include <..>' and '#include ".."' cases
- *
- * Revision 1.4  1995/07/06  14:20:44  bynum
- * add printf to print source line guarded by if (yydebug)
- *
- * Revision 1.3  1995/06/30  14:02:19  bynum
- * add case for ATOMIC symbol
- *
- * Revision 1.2  1995/06/22  06:38:05  bynum
- * add '#' char, INCLUDE token, change input() to switch to & from include file
- *
+ *  $Id: bapascal.l,v 2.12 2007/06/01 18:47:03 bynum Exp $
  *
  */

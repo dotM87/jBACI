@@ -27,7 +27,7 @@ extern   char  *lastident();
 
 extern   int fprintf(FILE*,const char*,...);
 extern   int printf(const char*,...);
-extern   int free(void*);
+/* extern   int free(void*); */
 extern   void yyerror(char*); 
 extern   int yylex(void); 
 
@@ -40,7 +40,7 @@ void add_var_init(int* curr_var, int tix, int level, int value);
 
 #define YYDEBUG 1
 
-char  comp_tail[] = {"C-- to PCODE Compiler, "};
+char  comp_tail[] = {"C-- to PCODE Compiler in C, "};
 extern char  comp_date[];
 
 char  source_suffix[] = {".cm"};
@@ -49,6 +49,7 @@ char  list_suffix[] = {".lst"};
 BUFFER   pbuf;   /* string buffer for parsing */
 /* constants for passing synthesized information back up the parse tree */
 int   dx,level=0;
+int maxlevel = 0;
 /* for passing type of constant back to constant productions */
 TYPES consttype;
 /* for passing back information to productions using 'type' prod */
@@ -103,7 +104,6 @@ TYPES formal_type;      /* holds typ field of formal parms */
 
 int   in_func_decl;     /* 1 if declaring a function, 0 otherwise */
 int   void_function;    /* 1 if function has VOID return type, 0 otherwise */
-int   func_tab;         /* tab index of function being declared */
 
 #define MAXBREAK  200   
    /* max # breaks in a nest of loop and switch stmts */
@@ -230,11 +230,6 @@ int   in_typedef = 0;   /* 1 if in an array typedef, 0 otherwise */
 int  varargs_cnt;       /* to count the number of args in a varargs call */
                         /* e.g., sprintf, sscanf                         */
 
-int graphics_count = 0; /* Count of parameters for graphics procedures */ /*Moti*/
-int linda_count = 0; /* Count of parameters for linda procedures */ /*Moti*/
-int linda_mode = 0; /* Mode: 0=(value,value), 1=(var,value), 2=(value,var), 3=(var,var) */ /*Moti*/
-const	int	formal = -32767;	/* Indicator of empty or formal parameter */ /*Moti*/
-
 #define emit_push_addr(x)  (\
 emit2(((x).normal ? LOAD_ADDR : LOAD_VALUE), (x).lev, (x).adr))
 
@@ -257,9 +252,6 @@ emit2(((x).normal ? LOAD_ADDR : LOAD_VALUE), (x).lev, (x).adr))
 %token SEND RECEIVE BROADCAST
 %token EXTERN
 %token SSCANF SPRINTF
-%token CREATE MAKEVISIBLE MOVETO MOVEBY CHANGECOLOR    /*Moti*/
-%token POSTNOTE REMOVENOTE READNOTE REMOVENOTEEQ READNOTEEQ /*Moti*/
-%token NBCIN  /*Moti*/
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -368,6 +360,7 @@ main_hdr  :  opt_main_type  MAIN  '('  ')'
             prt = last_tab;
             enter_block(&last_btab,&level,last_tab);
             btab[last_btab].lastpar = last_tab; /* no parms */
+            if (maxlevel < level) maxlevel = level;
             main_declared = 1;
             $$ = prt;
             btab[0].lastpar = prt;  /* save main's tabix for the interp */
@@ -393,6 +386,7 @@ function_decl  :  func_proto  compound_stmt
             if (main_declared)
                yyerror("main() proc must be last");
             if (void_function) {
+               if (curr_ret >= 0) process_returns();
                if (tab[$1].mon) emit(EXITMON);
                emit(EXIT_PROC);
             }
@@ -472,9 +466,9 @@ function_id  :  IDENTIFIER
                vis_level = real_level = level;
             }
             $$ = prt = enter(lastident(),function,real_level,vis_level);
-            func_tab = prt;
             if (in_mon_decl) tab[prt].mon = mtab[mon] - last_predeclared;
             enter_block(&last_btab,&level,prt);
+            if (maxlevel < level) maxlevel = level;
             curr_parm_offset = btab[display[level]].vsize;
             delta_vsize = curr_parm_offset - btab[display[level]].psize;
             tab[$$].adr = (extern_decl ?  -1 : lc);
@@ -519,8 +513,9 @@ param_typespec  :  var_typespec     /* by value */
             elem_ref = 0;
             elem_size = 1;  /* a pointer */
             elem_typ  = strings;
-            elem_tix = -1;
+            elem_tix = -1; /* not in symbol table */
             by_value = 0;  /* pass-by-reference */
+            $$ = -1;       /* not in symbol table */
          }
       ;
       
@@ -544,6 +539,7 @@ monitor_hdr  :  MONITOR  newident
                yyerror("Monitors can only be declared at the global level");
             enter_block(&last_btab,&level,last_tab);
             btab[last_btab].lastpar = last_tab;  /* no parms */
+            if (maxlevel < level) maxlevel = level;
          }
       ; 
 
@@ -876,7 +872,9 @@ opt_for_expr_list  :  /* empty */
       ;
 
 for_expr_list  :  expr
+         { free_expr($1); }
       |  for_expr_list  ','  expr
+         { free_expr($3); }
       ;
 
 stmt  :  selection_stmt
@@ -895,7 +893,6 @@ stmt  :  selection_stmt
       |  return_stmt
       |  output_stmt
       |  input_stmt
-      |  nbinput_stmt  /*Moti*/
       |  null_stmt
       |  special_proc_calls
       ;
@@ -903,8 +900,6 @@ stmt  :  selection_stmt
 special_proc_calls  : send_call
       |  broadcast_call
       |  sprintf_call
-      |  graphics_call   /*Moti*/
-      |  linda_call      /*Moti*/
       ;
 
 send_call  :  SEND  left_exprparm  ','  expr  ')'  ';'
@@ -986,9 +981,10 @@ sprintf_buf_fmt  :  SPRINTF  '('  expr  ','  rawstring_parm
 
 sprintf_parmlist  :  expr
          {  
-            if ((expr[$1].typ != ints)&&(expr[$1].typ != strings))
+            if ((expr[$1].typ != ints)&&(expr[$1].typ != strings)&&
+                (expr[$1].typ != chars))
                yyerror(
-            "sprintf parameter must be either of type 'int' or type 'string'");
+            "sprintf parameter must be either of type 'char', 'int' or type 'string'");
             if (expr[$1].typ == strings)
                emit_push_addr(expr[$1]);
             else
@@ -998,9 +994,10 @@ sprintf_parmlist  :  expr
          }
       |  sprintf_parmlist  ','  expr
          {  
-            if ((expr[$3].typ != ints)&&(expr[$3].typ != strings))
+            if ((expr[$3].typ != ints)&&(expr[$3].typ != strings)&&
+                (expr[$3].typ != chars))
                yyerror(
-            "sprintf parameter must be either of type 'int' or type 'string'");
+            "sprintf parameter must be either of type 'char', 'int' or type 'string'");
             if (expr[$3].typ == strings)
                emit_push_addr(expr[$3]);
             else
@@ -1009,186 +1006,6 @@ sprintf_parmlist  :  expr
             free_expr($3);
          }
       ; 
-
-/*Moti*/ /* Graphics: from here down to ... */      
-      
-graphics_call : create_call 
-	| make_visible_call 
-	| moveto_call 
-	| moveby_call 
-	| changecolor_call
-	;
-
-
-create_call : CREATE graphics_params
-	{
-	if (graphics_count != 7) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;
-	emit(CREATE_OP);
-	}
-	;
-	
-moveto_call : MOVETO graphics_params
-	{
-	if (graphics_count != 3) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;
-	emit(MOVETO_OP);
-	}
-	;
-	
-moveby_call : MOVEBY graphics_params
-	{
-	if (graphics_count != 3) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;
-	emit(MOVEBY_OP);
-	}
-	;
-	
-make_visible_call : MAKEVISIBLE graphics_params
-	{
-	if (graphics_count != 2) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;  
-	emit(MAKEVISIBLE_OP);
-	}
-	; 
-
-changecolor_call : CHANGECOLOR graphics_params
-	{
-	if (graphics_count != 2) yyerror("wrong number of graphics parameters");
-	graphics_count = 0;    
-	emit(CHANGECOLOR_OP);
-	}
-	; 
-	
-graphics_params  :  '(' graphics_list ')'
-      ;
-
-graphics_list   : graphics_list ',' graphics_param
-      | graphics_param
-      ; 
-
-graphics_param   : expr 
-	{
-	if (expr[$1].typ != ints) yyerror("graphics parameters must be of integer type");
-	graphics_count++;
-	gen_exprval($1);
-	free_expr($1); 
-	}
-	;
-	
-/*Moti*/ /* ... here */
-
-/*Moti*/ /* Linda: from here down to ... */      
-
-linda_call : 
-	post_call 
-	| remove_call 
-	| read_call 
-	| removeeq_call 
-	| readeq_call 
-	;
-
-post_call : POSTNOTE linda_value_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	emit(POSTNOTE_OP);
-	}
-	;
-	
-remove_call : REMOVENOTE linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	emit2(REMOVENOTE_OP,0,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-read_call : READNOTE linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	emit2(REMOVENOTE_OP,1,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-removeeq_call : REMOVENOTEEQ linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	linda_mode = 3;
-	emit2(REMOVENOTE_OP,0,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-readeq_call : READNOTEEQ linda_var_params 
-	{
-	if (linda_count <= 2) emit1(PUSH_LIT, formal);
-	if (linda_count == 1) emit1(PUSH_LIT, formal);
-	linda_count = 0;
-	linda_mode = 3;
-	emit2(REMOVENOTE_OP,1,linda_mode);
-	linda_mode = 0;
-	}
-	;
-	
-linda_value_params  :  '(' linda_value_list ')'
-      ;
-
-linda_var_params  :  '(' linda_var_list ')'
-      ;
-
-linda_value_list   : linda_value_list ',' linda_value_param
-      | linda_value_param
-      ; 
-
-linda_var_list   : linda_value_param
-	| linda_value_param ',' linda_var_list_1
-      ; 
-
-linda_var_list_1   : linda_var_list_1 ',' linda_var_param
-	| linda_var_param 
-      ; 
-      
-linda_value_param   : expr 
-	{
-	if (linda_count > 2) yyerror("Only three Linda parameters allowed");
-	else if ((linda_count == 0) && (expr[$1].typ != chars)) yyerror("first Linda parameter must be of char type");
-	else if ((linda_count >  0) && (expr[$1].typ != ints)) yyerror("other Linda parameters must be of integer type");
-	linda_count++;
-	gen_exprval($1);
-	free_expr($1); 
-	}
-	;
-
-linda_var_param   : ident '='
-	{
-	if (linda_count > 2) yyerror("Only three Linda parameters allowed");
-	else if (tab[$1].typ != ints) yyerror("other Linda parameters must be of integer type");
-	emit2(LOAD_ADDR, tab[$$].lev,tab[$$].adr);
-	linda_mode = linda_mode + linda_count;
-	linda_count++;
-	free_expr($1); 
-	}
-	|
-	ident 
-	{
-	if (linda_count > 2) yyerror("Only three Linda parameters allowed");
-	else if (tab[$1].typ != ints) yyerror("other Linda parameters must be of integer type");
-	emit2(LOAD_ADDR, tab[$$].lev,tab[$$].adr);
-	linda_count++;
-	free_expr($1); 
-	}
-	;
-
-/*Moti*/ /* ... here */
 
 selection_stmt  :  if_expr  then_stmt     %prec LOWER_THAN_ELSE
         { code[$1].y = $2; }
@@ -1205,10 +1022,10 @@ selection_stmt  :  if_expr  then_stmt     %prec LOWER_THAN_ELSE
                /* the current case of the enclosing switch block is one */
                /* less than the first case of this block                */
             curr_case = switch_block[switch_level].first_case - 1;
+            free_expr(switch_block[switch_level].expr_index);
             switch_level--;
             process_breaks();
             leave_break_block(&break_level,&curr_break,&curr_cont);
-            free_expr($1);
          }
       ;
 
@@ -1222,6 +1039,7 @@ then_stmt  :  stmt
 
 the_else  :  ELSE
          { emit(JUMP); $$ = lc; }
+      ;
 
 switch_hdr  :  SWITCH  '('  expr  ')'
          { 
@@ -1482,27 +1300,36 @@ break_stmt  :   BREAK  ';'
                }
             }
          }
+      ;
 
 return_stmt  :  the_return  opt_expr  ';'
          {  
             if (void_function) {
-               if ($2 < 0)
-                  emit(EXIT_PROC); 
+               if ($2 < 0) {
+                  if (++curr_ret == MAXRETURN)
+                     cfatal(
+   "No more thn %d 'return' statements can appear in a function",MAXRETURN);
+                  else
+                     return_loc[curr_ret] = lc;    /* mark the JUMP loc */
+                  emit(JUMP);
+               }
                else
                   yyerror("Cannot return a value from a 'void' function");
             }
-            if ($2 >= 0) 
-               gen_exprval($2); 
-            else  /* no expression to push */
-               emit1(PUSH_LIT,0); 
-            emit(STORE); 
-            if (++curr_ret == MAXRETURN)
-               cfatal(
+            else {   // non void function
+               if ($2 >= 0) 
+                  gen_exprval($2); 
+               else  /* no expression to push */
+                  emit1(PUSH_LIT,0); 
+               emit(STORE); 
+               if (++curr_ret == MAXRETURN)
+                  cfatal(
    "No more thn %d 'return' statements can appear in a function",MAXRETURN);
-            else
-               return_loc[curr_ret] = lc;    /* mark the JUMP loc */
-            emit(JUMP);   /* jump to fcn exit*/ 
-         } 
+               else
+                  return_loc[curr_ret] = lc;    /* mark the JUMP loc */
+               emit(JUMP);   /* jump to fcn exit*/ 
+            } 
+         }
          ; 
          
 the_return  :  RETURN 
@@ -1510,7 +1337,7 @@ the_return  :  RETURN
             if (!in_func_decl)
                yyerror("'return' is inappropriate outside a function");
             else if (!void_function)
-                  emit2(LOAD_ADDR,tab[func_tab].lev+1,0);
+                  emit2(LOAD_ADDR,tab[prt].lev+1,0);
          }
       ;
 
@@ -1555,25 +1382,10 @@ input_stmt  :  CIN  GTGT  expr  ';'
                yyerror("input item must be of type 'int' or 'char'");
             else if (!expr[$3].arelt){ 
                emit_push_addr(expr[$3]);
-               emit2(READ,0,expr[$3].typ);
+               emit1(READ,expr[$3].typ);
             } else   /* array element */
                emit1(READ,expr[$3].typ);
-         }
-      ;
-
-/*Moti*/ /* Non-blocking input */
-nbinput_stmt  :  NBCIN  GTGT  expr  ';'
-        {
-            if ((expr[$3].obj != variable)&& (expr[$3].obj != ext_variable))
-               yyerror("input item must be a 'variable'");
-            else if ((expr[$3].typ != ints)&&(expr[$3].typ != chars)&&
-                     (expr[$3].typ != notyp))
-               yyerror("input item must be of type 'int' or 'char'");
-            else if (!expr[$3].arelt){ 
-               emit_push_addr(expr[$3]);
-               emit2(READ,1,expr[$3].typ);
-            } else   /* array element */
-               emit1(READ,expr[$3].typ);
+            free_expr($3);
          }
       ;
 
@@ -1582,6 +1394,7 @@ null_stmt   :  ';'
 opt_expr  :  /* empty */
          { $$ = -1; }
       |  expr
+         { free_expr($1); }
       ;
 
 expr_stmt  :  expr  ';'
@@ -1592,7 +1405,7 @@ expr_stmt  :  expr  ';'
          }
       ;
 
-expr  :  cond_expr
+expr  :  logical_or_expr
       |  var_assign
       ;
 
@@ -1615,6 +1428,7 @@ var_assign  :  id_becomes expr
             else
                yyerror("Type mismatch in assignment");
             $$ = $2;
+            expr[$$].tix = $1;
             assign_cnt--;
          }
       |  array_var_becomes  expr
@@ -1625,7 +1439,7 @@ var_assign  :  id_becomes expr
                    (expr[$1].typ == conds))
                   yyerror("Cannot assign to 'semaphore' or 'condition'");
                else if (expr[$1].typ == arrays)
-                  emit1(COPY_BLOCK,atab[tab[$1].ref].size);
+                  emit1(COPY_BLOCK,atab[expr[$1].ref].size);
                else  /* standard types */
                   if (assign_cnt > 1)  /* multiple assignments */
                      emit(STORE_KEEP);
@@ -1634,6 +1448,8 @@ var_assign  :  id_becomes expr
             }
             else
                yyerror("Type mismatch in assignment");
+            free_expr($2);
+            expr[$1].isval = 1;
             $$ = $1;
             assign_cnt--;
          }
@@ -1643,9 +1459,6 @@ id_becomes  :  ident  '='
          {
             assign_cnt++;
             if ((tab[$1].obj == variable)||(tab[$1].obj == ext_variable)) {
-               if ((tab[$1].typ == sems)||(tab[$1].typ == bsems))
-                  yyerror("Must use `initialsem' to initialize a 'semaphore'");
-               else
                   emit_push_addr(tab[$1]);
             }
             else
@@ -1657,8 +1470,46 @@ array_var_becomes  :  array_var  '='
          { assign_cnt++; }
       ;
 
-cond_expr  :  simple_expr
-      |  left_simp_expr  relational_op  simple_expr
+logical_or_expr  :  logical_and_expr
+      |  left_logical_or_expr  OR  logical_and_expr
+         {
+            if ((expr[$1].typ == ints)&&(expr[$3].typ == ints)) {
+               gen_exprval($3);
+               emit(DO_OR);
+            }
+            else if ((expr[$1].typ != notyp)&&(expr[$3].typ != notyp)){
+               yyerror("type 'int' expected");
+               expr[$1].typ = notyp;
+            }
+            free_expr($3);
+         }
+      ;
+
+left_logical_or_expr  :  logical_or_expr
+         { gen_exprval($1); }
+      ;
+
+logical_and_expr  :  relational_expr
+      |  left_logical_and_expr  AND  relational_expr
+         {
+            if ((expr[$1].typ == ints)&&(expr[$3].typ == ints)) {
+               gen_exprval($3);
+               emit(DO_AND);
+            }
+            else if ((expr[$1].typ != notyp)&&(expr[$3].typ != notyp)){
+               yyerror("'int' type expected");
+               expr[$1].typ = notyp;
+            }
+            free_expr($3);
+         }
+      ;
+
+left_logical_and_expr  :  logical_and_expr
+         { gen_exprval($1); }
+      ;
+
+relational_expr  :  simple_expr
+      |  left_relational_expr  relational_op  simple_expr
          {
             gen_exprval($3);
             if (expr[$1].typ == expr[$3].typ){
@@ -1670,8 +1521,13 @@ cond_expr  :  simple_expr
             else
                yyerror("Types in comparison are unequal");
             expr[$1].typ = ints;
+            expr[$1].isval = 1;
             free_expr($3);
          }
+      ;
+
+left_relational_expr  :  simple_expr
+         { gen_exprval($1); }
       ;
 
 relational_op  :  EQ   { $$ = TEST_EQ; }
@@ -1703,36 +1559,29 @@ simple_expr  :  term
             else
                emit(NEGATE);
          }
-      |  left_simp_expr  add_op  term
+      |  left_simple_expr  add_op  term
          {
             gen_exprval($3);
             switch ($2) {
-            case DO_OR:
-               if ((expr[$1].typ == ints)&&(expr[$3].typ == ints))
-                  emit(DO_OR);
-               else if ((expr[$1].typ != notyp)&&(expr[$3].typ != notyp)){
-                  yyerror("type 'int' expected");
-                  expr[$1].typ = notyp;
-               }
-               break;
             case DO_ADD:
             case DO_SUB:
                expr[$1].typ = resulttype(expr[$1].typ,expr[$3].typ);
                if (expr[$1].typ == ints)
                   emit($2);
                break;
+            default:
+               fatal("grammar error:  bad add_op %d in simp_expr",$2);
             } /* switch */
             free_expr($3);
          }
       ;
 
-left_simp_expr  :  simple_expr
+left_simple_expr  :  simple_expr
          { gen_exprval($1); }
       ;
 
 add_op  :  '+'  { $$ = DO_ADD; }
       |  '-'    { $$ = DO_SUB; }
-      |  OR     { $$ = DO_OR; }
       ;
 
 term  :  factor 
@@ -1740,14 +1589,6 @@ term  :  factor
          {
             gen_exprval($3);
             switch($2) {
-            case DO_AND:
-               if ((expr[$1].typ == ints)&&(expr[$3].typ == ints))
-                  emit(DO_AND);
-               else if ((expr[$1].typ != notyp)&&(expr[$3].typ != notyp)){
-                  yyerror("'int' type expected");
-                  expr[$1].typ = notyp;
-               }
-               break;
             case DO_MUL:
             case DO_DIV:
             case DO_MOD:
@@ -1758,6 +1599,8 @@ term  :  factor
                   expr[$1].typ = notyp;
                }
                break;
+            default:
+               fatal("grammar error:  bad mult_op %d in term",$2);
             } /* switch */
             free_expr($3);
          }
@@ -1770,7 +1613,6 @@ left_term  :  term
 mult_op  :  '*'  { $$ = DO_MUL; }
       | '/'      { $$ = DO_DIV; }
       | '%'      { $$ = DO_MOD; }
-      | AND      { $$ = DO_AND; }
       ;
 
 factor  :  variable     
@@ -1933,7 +1775,7 @@ func_id  :  ident
                else{  /* legal func call */
                   pfstack[toppfs].tix = last_pf; 
                   pfstack[toppfs].pct = parmct = 0;
-                  first_stringerr = first_parmcterr = 1;
+                  first_parmcterr = 1;
                   if (tab[$1].lev != -1){ /* regular proc call */
                      if ((tab[$1].mon)&&(tab[prt].mon)&&
                          (tab[$1].mon != tab[prt].mon))
@@ -1986,6 +1828,7 @@ stringconcat_call  :  STRINGCONCAT  left_exprparm  right_stringparm
 
 right_stringparm  :  ','  expr  ')'
          {
+            $$ = $2;
             if (expr[$2].typ != strings) {
                yyerror("right parameter is not of type 'string'");
                last_eltyp = notyp;
@@ -2174,7 +2017,7 @@ receive_call :  RECEIVE  left_exprparm  ')'
 
 array_var  :  array_id  index_expr
          {
-            expr[$1].ref = sizeof(int)*atab[last_aref].elsize;
+            expr[$1].ref = last_aref;
             expr[$1].arelt = 1;
             expr[$1].typ = last_eltyp;
             topars--;
@@ -2240,11 +2083,6 @@ index_expr  :  index_expr  '['  expr  ']'
 typecast  :  INT  '('  expr  ')'
          {
             expr[$3].typ = ints;
-            $$ = $3;
-         }
-	 |   CHAR  '('  expr  ')'
-         {
-            expr[$3].typ = chars;
             $$ = $3;
          }
       ;
@@ -2353,161 +2191,6 @@ void add_var_init(int* curr_var, int tix, int level, int value)
 
 /*
  *
- *  $Log: bac.y,v $
- *
- *  Revision 3.4  2004/07/18 Moti
- *  Linda syntax
- *
- *  Revision 3.3  2004/02/26 Moti
- *  Non-blocking read
- *
- *  Revision 3.2  2003/10/12 Moti
- *  Linda primitives
- *                                  
- *  Revision 3.0  2003/04/03 14:24:11  Moti
- *  changes for graphics procedures
- *
- *  Revision 2.22  2002/03/21 14:36:23  bynum
- *  add else clause for cin input to an array element
- *
- *  Revision 2.21  2002/02/26 20:37:36  bynum
- *  zero in_typedef flag in non-array typedef
- *
- *  Revision 2.20  2001/11/16 13:45:34  bynum
- *  add code to block the user from calling a non-void function as a void fcn
- *
- *  Revision 2.19  2001/08/01 13:36:48  bynum
- *  add ext_variable to two object type tests
- *
- *  Revision 2.18  2001/07/13 19:28:07  bynum
- *  add globtabs.h include
- *
- *  Revision 2.17  2001/07/05 14:11:37  bynum
- *  allow assignments to ext_variable, move stacksize and ceil to bacicnty.h,
- *  prevent generation of mon init code for ext_monitor, fix psize, vsize
- *  calculations for call-by-reference
- *
- *  Revision 2.16  2001/06/04 16:28:45  bynum
- *  add switch_level increment to switch_hdr rule
- *
- *  Revision 2.15  2000/08/03 20:56:20  bynum
- *  remove writetab.h include
- *
- *  Revision 2.14  2000/06/02 19:28:06  bynum
- *  add warning msg when fcn type defaults to int, block non-void calls
- *  in a cobegin block
- *
- *  Revision 2.13  1999/07/06 15:23:08  bynum
- *  remove extraneous ';' from for_expr_list production, add
- *  ints type to the two productions for receive call
- *
- *  Revision 2.12  1998/11/26 22:46:02  bynum
- *  turn off in_typedef flag at the end of typedef rule
- *
- *  Revision 2.11  1998/10/22 11:27:58  bynum
- *  add init of semaphore and binary sem at declaration
- *
- *  Revision 2.10  1998/08/23 17:32:39  bynum
- *  add productions and code to handle multiple case labels in
- *  the switch statement
- *
- *  Revision 2.9  1997/12/16 19:30:21  bynum
- *  fix two misnumbered non-terminals in two rules
- *
- *  Revision 2.8  1997/11/19 14:18:13  bynum
- *  add empty case to compound_stmt rule
- *
- * Revision 2.7  1997/11/12  18:00:35  bynum
- * make sure EXITMON is emitted before processing returns at
- * function exit
- *
- * Revision 2.6  1997/11/03  20:08:55  bynum
- * add fwd declarations of process_break, process_continues, process_returns
- * (AIX wants them)
- *
- *
- * Revision 2.5  1997/10/21  06:33:14  bynum
- * change sprintf_cnt and sscanf_cnt to varargs_cnt
- *
- * Revision 2.4  1997/10/19  06:52:21  bynum
- * fix int() typecast rule, change the way send, broadcast, and sprintf
- * calls are incorporated into grammar
- *
- * Revision 2.3  1997/09/04  10:52:04  bynum
- * add sscanf, sprintf
- *
- * Revision 2.2  1997/07/25  12:40:54  bynum
- * add in_typedef flag to keep typedefs from being added to stackframe size,
- * fix array elref field handling, make tab[].adr field reflect byte size
- *
- * Revision 2.1  1997/07/10  17:23:55  bynum
- * move yyerror() to ../lib/computils.c, fix parmct error
- *
- * Revision 2.0  1997/07/02  13:05:50  bynum
- * make main() optional, add extern procs, monitors and variables
- *
- * Revision 1.18  1997/06/20  10:02:34  bynum
- * add send, receive, broadcast, int() typecast
- *
- * Revision 1.17  1997/06/17  05:25:51  bynum
- * add 'emit_push_addr' macro, make main() a mainproc object
- *
- * Revision 1.16  1997/06/02  06:56:43  bynum
- * add string type
- *
- * Revision 1.15  1997/05/13  10:15:10  bynum
- * fix break, continue, switch nesting, correct yyerror output
- *
- * Revision 1.14  1997/04/01  12:43:05  bynum
- * use 'lasttoken' in yyeror, add 'null_stmt' rule, repair 'atomic'
- *
- * Revision 1.13  1997/03/25  14:46:47  bynum
- * incorporate name changes in the include directories, add prototypes
- * to silence gcc -Wall complaints
- *
- * Revision 1.12  1997/02/04  08:27:35  bynum
- * remove yyin again, fix yytext output in yyerror
- *
- * Revision 1.11  1997/02/04  07:01:09  bynum
- * switch to FLEX
- *
- * Revision 1.10  1996/05/10  15:03:24  bynum
- * fix assignment in a const declaration
- *
- * Revision 1.9  1996/03/07  09:20:14  bynum
- * remove yyin, yyout declarations
- *
- * Revision 1.8  1996/03/06  13:54:09  bynum
- * add extern to yyin, yyout declarations
- *
- * Revision 1.7  1995/09/19  14:49:48  bynum
- * remove 'comp_date' declaration, change monintor init so
- * RET_MONINIT is emitted last\
- *
- * Revision 1.6  1995/09/07  14:23:45  bynum
- * change to use libba.a library, change includes to conform to
- * new include files, remove definition of 'fatal'
- *
- * Revision 1.5  1995/09/06  13:54:23  bynum
- * add and correct code for 'const', assignment-in-declaration,
- * and 'typedef'
- *
- * Revision 1.4  1995/09/05  14:24:27  bynum
- * add code to handle multple 'break', 'continue', 'case', and 'return'
- * statements, add code to handle recursion in 'for' and 'switch' statments,
- * add ++, --, cout, and cin C++ I/O. Fix var_init for "assignment var
- * declarations" in a monitor
- *
- * Revision 1.3  1995/08/26  16:45:59  bynum
- * add 'break' and 'continue' code, separate 'cobegin' from iteration
- * statements
- *
- * Revision 1.2  1995/08/26  11:09:57  bynum
- * implement 'for' loop, C++ output stream semantics, function & VOID
- * function calls, add 'lastident' FIFO string buffer calls
- *
- * Revision 1.1  1995/08/24  10:50:04  bynum
- * Initial revision
- *
+ *  $Id: bac.y,v 2.30 2007/06/01 18:40:34 bynum Exp $
  *
  */

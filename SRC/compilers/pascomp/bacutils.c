@@ -1,4 +1,4 @@
-/* utility pgms for BenAri Concurrent Pascal Compiler */
+/* utility pgms for the BACI Concurrent Pascal Compiler */
 
 #include <stdlib.h>  /* for malloc */
 #include <time.h>    /* for ctime */
@@ -92,11 +92,8 @@ void  get_filenames(char *p)
    x = strrchr(source_prefix,'.');  /* look for suffix */
    if (x == NULL) /* if none, concat suffix to source_fname */
       strcat(source_fname,source_suffix);
-   else { /* source_prefix has a suffix -- is it the one we want? */
-      if (strcmp(x,source_suffix) == 0) /* if so, truncate the prefix */
-         *x = '\0';
-      else  /* otherwise, add the desired suffix to the existing suffix */
-         strcat(source_fname,source_suffix);
+   else { /* source_prefix has a suffix -- use it */
+      *x = '\0';
    }
    sprintf(list_fname,"%s%s",source_prefix,list_suffix);
    sprintf(pcode_fname,"%s%s",source_prefix,
@@ -161,7 +158,6 @@ void  global_init(int argc, char **argv)
    enterstid("empty",function,bools,SF_EMPTY);
    /* adr field for std procedure is used in the parser */
    enterstid("read",procedure,notyp,SP_READ);
-   enterstid("nbread",procedure,notyp,SP_NBREAD);  /*Moti*/ /* Nonblocking read */
    enterstid("readln",procedure,notyp,SP_READLN);
    enterstid("write",procedure,notyp, SP_WRITE);
    enterstid("writeln",procedure,notyp,SP_WRITELN);
@@ -184,59 +180,6 @@ void  global_init(int argc, char **argv)
 
 /*
  *
- *  $Log: bacutils.c,v $
- *  Revision 2.4  2004/02/16 Moti
- *  Nonblocking read added
- *
- *  Revision 2.3  2001/07/13 19:28:59  bynum
- *  add globtabs.h include
- *
- *  Revision 2.2  2000/08/04 17:10:49  bynum
- *  replace last_dbg_ix with last_dbg
- *
- *  Revision 2.1  1998/11/26 22:49:09  bynum
- *  allow user to enter the .pm file suffix
- *
- * Revision 2.0  1997/07/09  11:53:20  bynum
- * change from t to last_tab, b to last_btab, a to last_atab, sx to stab_size
- *
- * Revision 1.12  1997/06/20  10:05:37  bynum
- * add INT_MSG, STRING_MSG constants, last_predeclared init
- *
- * Revision 1.11  1997/06/17  05:44:03  bynum
- * for enterstid() calls of builtin types, switch size to byte size
- *
- * Revision 1.10  1997/03/25  14:51:33  bynum
- * incorporate name changes in the include directory, add fprintf prototype
- *
- * Revision 1.9  1997/03/01  05:34:32  bynum
- * remove yylineno (FLEX doesn't need it)
- *
- * Revision 1.8  1996/03/07  09:24:02  bynum
- * change to 'stat' call to obtain date for file being compiled
- *
- * Revision 1.7  1995/09/07  14:32:31  bynum
- * move code to appropriate ../lib file, change includes to new
- * structure of the ../include directory
- *
- * Revision 1.6  1995/08/29  16:51:04  bynum
- * add 'write_debug_info' code, necessary 'dbg' assignments
- *
- * Revision 1.5  1995/07/09  19:23:19  bynum
- * add commenting to 'index_expr', change parm 'typ' to 'eltyp', and
- * emit INDEX even in the case of an indexing error
- *
- * Revision 1.4  1995/07/06  14:13:04  bynum
- * add 'stdproc_pcode' to emit as much of the PCODE as possible for
- * the std procs, change 'stdproc_parms' so that REVIVE & RANDOM parms
- * are pass-by-value (use 'gen_exprval' calls)
- *
- * Revision 1.3  1995/06/30  14:27:04  bynum
- * add code and variables for 'atomic' keyword, put back 'comp_proot' variable
- *
- * Revision 1.2  1995/06/22  06:41:39  bynum
- * remove 'comp_proot' variable, add 'open_infile' call to open original
- * source file
- *
+ *  $Id: bacutils.c,v 2.6 2007/06/01 20:09:49 bynum Exp $
  *
  */

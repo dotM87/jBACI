@@ -172,31 +172,8 @@
    /* finds length of string stored at s[s[t]] using strlen, returns   */
    /* result at s[t]                                                   */
 
-/*Moti .... */
-/* Modifications by Moti for graphics commands */
-#define	 CREATE_OP		120 
-/*  Create(handle,figure,color,x,y,size1,size2) */
-#define	 MAKEVISIBLE_OP	121
-/* MakeVisible(handle,flag) */
-#define	 MOVETO_OP		122
-/* MoveTo(handle,x,y) */
-#define	 MOVEBY_OP		123
-/* MoveBy(handle,deltax,deltay) */
-#define	 CHANGECOLOR_OP	124
-/* ChangeColor(handle,color) */
-
-/* Modifications by Moti for Linda primitives */
-#define POSTNOTE_OP		130
-/* PostNote(char, int, int) */
-#define REMOVENOTE_OP		131
-/* Remove/ReadNote(char, int&, int&) */
-/* Remove if x = 0, Read if x = 1 */
-/* y = 1 to match formal parameters */
-/*Moti .... */
-
 /*  Constants used for standard procs and functions */
 #define SP_READ          1
-#define SP_NBREAD	   21 /* Moti */ /* Nonblocking read */
 #define SP_READLN        2
 #define SP_WRITE         3
 #define SP_WRITELN       4
@@ -217,45 +194,6 @@
 
 /*
  *
- *  $Log: pcode.h,v $
- * Revision 1.12 moti
- * added constant for non-blocking read 
- *
- * Revision 1.11 moti
- * added codes for linda 
- *
- * Revision 1.10 moti
- * added codes for graphics 
- *
- * Revision 1.9  1997/09/04  11:02:52  bynum
- * add SSCANF_OP, SPRINTF_OP
- *
- * Revision 1.8  1997/07/02  14:07:11  bynum
- * add SHORTCALL, SHORTRET
- *
- * Revision 1.7  1997/06/17  05:51:04  bynum
- * add string and distributed BACI opcodes, remove database compiler opcodes
- *
- * Revision 1.6  1996/03/07  09:14:45  bynum
- * add opcodes for db compiler
- *
- * Revision 1.5  1995/09/05  14:51:15  bynum
- * change TEST_EQ_LEAVE to TEST_EQ_KEEP
- *
- * Revision 1.4  1995/08/29  16:05:03  bynum
- * add opcodes for STORE_KEEP and TEST_EQ_LEAVE
- *
- * Revision 1.3  1995/07/06  14:06:01  bynum
- * add commenting for MARKSTACK and CALL, delete EXIT, renumber
- * SUSPEND, REVIVE, WHICH_PROC, RANDOM
- *
- * Revision 1.2  1995/06/30  13:49:39  bynum
- * add WHICH_PROC, SUSPEND, REVIVE, and RANDOM.  Add SP_EXIT, SP_SUSPEND,
- * SP_REVIVE, SF_WHICHPROC, and SF_RANDOM constants.  Change SF_EMPTY from 2
- * to 16
- *
- * Revision 1.1  1995/06/19  17:08:08  bynum
- * Initial revision
- *
+ *  $Id: pcode.h,v 1.10 2007/06/01 17:41:16 bynum Exp $
  *
  */

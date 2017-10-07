@@ -1,2 +1,0 @@
-xcopy /s * \bacisrc
-

@@ -1,0 +1,68 @@
+BACI System: C-- to PCODE Compiler, 10/03/2010
+Source file: /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-6/examples/lintest1.cm  Sun Jul 18 13:10:28 2004
+ line  pc
+   1    0  /* Test of Linda primitives */
+   2    0  /* Follow instructions carefully! */
+   3    0  /* Start by stepping p1 */
+   4    0  /* Comments describe observable results */
+   5    0  
+   6    0  void p1() {
+   7    0    char c; 
+   8    0    int i1, i2; 
+   9    0    /* Step process p1 until **** */
+  10    0  
+  11    0    /* Check post-, read- and remove-note */
+  12    0    postnote('m', 10, 20);		/* Posts note */
+  13    4    readnote('m', i1, i2);
+  14    8    cout << i1 << ' ' << i2 << '\n';	/* Prints 10 20 */
+  15   16    removenote('m', i1, i2);
+  16   20    cout << i1 << ' ' << i2 << '\n';	/* Prints 10 20 */
+  17   28  
+  18   28    /* Check different size notes */
+  19   28    postnote('a');			/* Posts note */
+  20   32    readnote('a');
+  21   36    readnote('a', i1, i2);  		/* (OK, parameters are not counted) */
+  22   40    cout << i1 << ' ' << i2 << '\n';	/* Prints -32767 -32767 */
+  23   48    removenote('a');			/* Removes note ('a') */
+  24   52    postnote('b', 7);			/* Posts note */
+  25   56    removenote('b', i1);			/* Removes note ('b',7) */
+  26   60    cout << i1 << '\n';			/* Prints 7 */
+  27   64    
+  28   64    /* Check values vs. variables */
+  29   64    
+  30   64    postnote('c', 1, 2);			/* Posts note */
+  31   68    c = 'd'; i1 = 8; i2 = 9;
+  32   77    postnote(c, i1, i2);			/* Posts note */
+  33   81    readnote('c', i1, i2);
+  34   85    cout << i1 << ' ' << i2 << '\n';	/* Prints 1 2 */
+  35   93    readnote(c, i1, i2);
+  36   97    cout << i1 << ' ' << i2 << '\n';	/* Prints 8 9 */
+  37  105    removenote('c', i1, i2);		/* Removes note ('c',1,2) */
+  38  109    cout << i1 << ' ' << i2 << '\n';	/* Prints 1 2 */
+  39  117    removenote(c, i1, i2);		/* Removes note ('d',8,9) */
+  40  121    cout << i1 << ' ' << i2 << '\n';	/* Prints 8 9 */
+  41  129    
+  42  129    /* Check blocking/unblocking */
+  43  129    readnote('a', i1, i2);  		/* Blocks p1 */
+  44  133    /* ****, step process p2 */
+  45  133  
+  46  133    /* Step p1 until ++++ */
+  47  133    cout << i1 << ' ' << i2 << '\n';	/* Prints 77 88 */
+  48  141    removenote('a', i1, i2);		/* Removes note ('a',77,88) */
+  49  145    cout << i1 << ' ' << i2 << '\n';	/* Prints 77 88 */
+  50  153    removenote('b', i1, i2);		/* Removes note ('b',55,66) */
+  51  157    cout << i1 << ' ' << i2 << '\n';	/* Prints 55 66 */
+  52  165  }
+  53  166  
+  54  166  void p2() {
+  55  166    /* Step this instruction after p1 blocks */ 
+  56  166    postnote('b', 55, 66); 	/* Posts note */
+  57  170    /* Step p1 again to make sure that it blocks again */
+  58  170    /* Step this instruction to unblock p1 */
+  59  170    postnote('a', 77, 88);	/* Posts note */
+  60  174  }
+  61  175  
+  62  175  void main() {
+  63  176    cobegin { p1(); p2(); }
+  64  184  }
+  65  186  

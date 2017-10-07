@@ -1,0 +1,47 @@
+BACI System: C-- to PCODE Compiler in C, 14:33   7 Oct 2017
+Source file: /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/linda.cm  Sat Feb 28 16:55:20 2004
+ line  pc
+   1    0  /*
+   2    0  	BACI implementation of a Linda Tuple Space - V1.0 (Pascal).
+   3    0  	Author: Moti Ben-Ari, 2003.
+   4    0  	Tuples are called notes and the tuple space is called the board.
+   5    0  	See jBACI.pdf for more information.
+   6    0  
+   7    0  	******** Superseded by implementation of Linda within jBACI!!! *************
+   8    0  
+   9    0  */	
+  10    0  
+  11    0  const	int	num    = 5;		/* Maximum number of notes on board */ 
+  12    0  const	int	procs  = 4;		/* Maximum number of processes */
+  13    0  const	int	formal = -32767;	/* Indicator of empty or formal parameter */
+  14    0  	
+  15    0  typedef	int	note[3];		/* Type of a note - three fields */
+  16    0  
+  17    0  	note	board[num];		/* The board of notes */
+  18    0  	int	waiting[procs];		/* Flags for processes waiting for notes */ 
+  19    0  
+  20    0  /*
+  21    0  	Utilities
+  22    0  		writenote, writespace
+  23    0  		assign (because array assignment doesn't work in back)
+  24    0  		maketuple from three values
+  25    0  		findempty place on the board
+  26    0  		initboard to empty board and no waiting processes
+  27    0  */		
+  28    0  
+  29    0  void writenote(note& t) {
+  30    0  	char c;
+  31    0    if (t[0] == formal) cout << "(empty)"; 
+  32    8    else {
+  33    9      c = char(t[0]); 
+Error near 'char', line 33 of file /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/linda.cm:
+**   syntax error 
+  34   10      cout << c << ' ';
+Error near '<<', line 34 of file /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/linda.cm:
+**   Cannot output an array 
+  35   12      if (t[1] != formal) cout << t[1] << ' ';
+Error near '[', line 35 of file /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/linda.cm:
+**   'c' is not of type 'array' 
+Error near ')', line 35 of file /home/gunter/GM_Concurr_Programming/jBACI/jBACI1-4-5/examples/linda.cm:
+**   Types in comparison are unequal 
+** Error: Compilation aborted.  Too many (4) errors.

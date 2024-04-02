@@ -1,5 +1,4 @@
 program Conway;
-
 var B1, B2, B3: integer;
     Empty1: binarysem := 1;
     Empty2: binarysem := 1;
